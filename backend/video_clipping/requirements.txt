@@ -5,3 +5,6 @@ boto3
 ffmpeg-python
 python-multipart
 requests
+boto3-stubs[s3]
+supabase
+python-dotenv
