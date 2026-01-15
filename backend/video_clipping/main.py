@@ -1,11 +1,17 @@
 # backend/main.py
+import os
+from dotenv import load_dotenv
+
+# Load .env from the same directory as this file
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+load_dotenv(env_path, override=True)
+
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from services.indexer import background_index_processor
 from services.slicer import process_job
 
 app = FastAPI()
-
 class IndexRequest(BaseModel):
     video_filename: str # Filename in R2
     video_db_id: str

@@ -2,7 +2,8 @@ import pytest
 import json
 from unittest.mock import MagicMock, patch
 
-from ...video_clipping.services.slicer import analyze_video, cut_and_upload
+# Import the logic to test (conftest.py adds video_clipping to path)
+from services.slicer import analyze_video, cut_and_upload
 
 # --- TEST 1: analyze_video ---
 
@@ -35,7 +36,7 @@ def test_analyze_video_success(mock_tl_client):
     mock_tl_client.analyze.assert_called_once()
     call_args = mock_tl_client.analyze.call_args
     assert call_args.kwargs["video_id"] == "test_video_id"
-    assert call_args.kwargs["query"] == "test query"
+    assert call_args.kwargs["prompt"] == "test query"
 
 @patch("services.slicer.tl_client")
 def test_analyze_video_empty(mock_tl_client):
@@ -93,20 +94,25 @@ def test_cut_and_upload_logic(mock_get_url, mock_ffmpeg, mock_s3, mock_remove):
     # Input should define start (ss) and duration (t)
     # duration = 22 - 8 = 14
     mock_ffmpeg.input.assert_called_with("http://signed-url.com/video.mp4", ss=8.0, t=14.0)
-    
+
+    # Output filename format: clip_{video_filename}_{i}_{int(start_time)}.mp4
+    # For game.mp4, index 0, start_time 8.0 -> clip_game.mp4_0_8.mp4
+    expected_local_path = "/tmp/clip_game.mp4_0_8.mp4"
+    expected_r2_key = "clips/job_123/clip_game.mp4_0_8.mp4"
+
     # Output should use a temp path
     output_args = mock_stream.output.call_args
-    assert "/tmp/clip_job_123_0.mp4" in output_args[0]
-    
+    assert expected_local_path in output_args[0]
+
     # C. Check S3 Upload
     mock_s3.upload_file.assert_called_once()
     upload_args = mock_s3.upload_file.call_args
     # args: (local_file, bucket, remote_key)
-    assert upload_args[0][0] == "/tmp/clip_job_123_0.mp4"
-    assert upload_args[0][2] == "clips/job_123/clip_job_123_0.mp4"
-    
+    assert upload_args[0][0] == expected_local_path
+    assert upload_args[0][2] == expected_r2_key
+
     # D. Check Cleanup
-    mock_remove.assert_called_with("/tmp/clip_job_123_0.mp4")
+    mock_remove.assert_called_with(expected_local_path)
 
 @patch("services.slicer.os.remove")
 @patch("services.slicer.s3_client")

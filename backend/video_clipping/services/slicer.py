@@ -1,17 +1,20 @@
 # backend/services/slicer.py
 import os
 import json
+import time
 import ffmpeg
 from twelvelabs import ResponseFormat
-from .common import tl_client, s3_client, R2_BUCKET_NAME, get_presigned_url, supabase
+from .common import tl_client, s3_client, R2_BUCKET_NAME, get_public_url, supabase, setup_logger
+
+logger = setup_logger("Slicer")
 
 def analyze_video(video_id: str, prompt: str):
     """Queries Twelve Labs for timestamps."""
-    print(f"[Slicer] Analyzing Video {video_id} for '{prompt}'...")
+    logger.info(f"Analyzing Video {video_id} for '{prompt}'...")
     
     response = tl_client.analyze(
         video_id=video_id,
-        query=prompt,
+        prompt=prompt,
         temperature=0.0,
         response_format=ResponseFormat(
             type="json_schema",
@@ -41,20 +44,21 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
     """
     Streams from R2 -> FFmpeg Cut -> R2.
     """
-    source_url = get_presigned_url(video_filename)
+    source_url = get_public_url(video_filename)
     clips_metadata = []
+    total_segments = len(segments)
 
     for i, match in enumerate(segments):
         start_time = max(0, match["start"] - padding)
         end_time = match["end"] + padding
         duration = end_time - start_time
-        
+
         output_filename = f"clip_{video_filename}_{i}_{int(start_time)}.mp4"
         local_output = f"/tmp/{output_filename}"
 
         r2_dest_key = f"clips/{job_id}/{output_filename}"
 
-        print(f"[Slicer] Cutting {start_time:.2f}-{end_time:.2f}...")
+        logger.info(f"Cutting segment {i + 1}/{total_segments}: {start_time:.2f}s - {end_time:.2f}s (duration: {duration:.2f}s)")
 
         try:
             # FFmpeg: Input Seeking (ss before i) is faster for remote files
@@ -68,12 +72,12 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
 
             # Upload back to R2
             s3_client.upload_file(local_output, R2_BUCKET_NAME, r2_dest_key)
-            
+
             # Generate View Link (7 days expiry)
             public_url = s3_client.generate_presigned_url(
                 'get_object',
                 Params={'Bucket': R2_BUCKET_NAME, 'Key': r2_dest_key},
-                ExpiresIn=604800 
+                ExpiresIn=604800
             )
 
             clips_metadata.append({
@@ -88,7 +92,7 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
             os.remove(local_output)
 
         except Exception as e:
-            print(f"[Slicer] Error processing segment {i}: {e}")
+            logger.exception(f"Error processing segment {i + 1}/{total_segments}: {e}")
             if os.path.exists(local_output):
                 os.remove(local_output)
             continue
@@ -97,14 +101,15 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
 
 def process_job(job_id: str):
     """
-    Background Task: 
+    Background Task:
     1. Fetch Job from DB
     2. Run Analyze
     3. Run Cut & Upload
     4. Save Results to DB
     """
-    print(f"[Slicer] Starting Job {job_id}...")
-    
+    job_start_time = time.time()
+    logger.info(f"Starting Job {job_id}...")
+
     try:
         # A. Fetch Data (Join Jobs with Videos)
         response = supabase.table("jobs").select("*, videos(*)").eq("id", job_id).single().execute()
@@ -116,21 +121,23 @@ def process_job(job_id: str):
 
         # B. Update Status -> Processing
         supabase.table("jobs").update({"status": "processing"}).eq("id", job_id).execute()
+        logger.info(f"Job {job_id} status -> processing")
 
         # C. Run Analysis
         segments = analyze_video(video["twelvelabs_video_id"], job["query"])
-        
+        logger.info(f"Analysis complete. Found {len(segments)} segments.")
+
         if not segments:
-            print("[Slicer] No segments found.")
+            logger.info("No segments found. Marking job as completed.")
             supabase.table("jobs").update({"status": "completed"}).eq("id", job_id).execute()
             return
 
         # D. Cut & Upload
         # Note: We pass the 'r2_path' from the video table
         clips_to_insert = cut_and_upload(
-            source_r2_path=video["r2_path"], 
-            segments=segments, 
-            padding=job["padding"], 
+            video_filename=video["r2_path"],
+            segments=segments,
+            padding=job["padding"],
             job_id=job_id
         )
 
@@ -140,8 +147,10 @@ def process_job(job_id: str):
 
         # F. Update Status -> Completed
         supabase.table("jobs").update({"status": "completed"}).eq("id", job_id).execute()
-        print(f"[Slicer] Job {job_id} finished. {len(clips_to_insert)} clips created.")
+        job_duration = time.time() - job_start_time
+        logger.info(f"Job {job_id} COMPLETED. {len(clips_to_insert)} clips created in {job_duration:.1f}s")
 
     except Exception as e:
-        print(f"[Slicer] Job Failed: {e}")
+        job_duration = time.time() - job_start_time
+        logger.exception(f"Job {job_id} FAILED after {job_duration:.1f}s: {e}")
         supabase.table("jobs").update({"status": "failed"}).eq("id", job_id).execute()

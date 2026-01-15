@@ -1,41 +1,45 @@
 # backend/services/indexer.py
 import time
 from twelvelabs import Asset, IndexesCreateRequestModelsItem
-from .common import tl_client, get_presigned_url, supabase
+from .common import tl_client, get_public_url, supabase, setup_logger
+
+logger = setup_logger("Indexer")
 
 def create_index_and_task(video_filename: str, index_name: str = None):
     """
-    1. Generates R2 signed URL
+    1. Gets R2 public URL
     2. Creates a Twelve Labs Index
     3. Starts the indexing task
     Returns: The new Index ID and the Asset ID (Task)
     """
     if not index_name:
-        index_name = f"volleyball_{video_filename}"
+        timestamp = int(time.time())
+        index_name = f"volleyball_{video_filename}_{timestamp}"
 
-    # 1. Get URL for Twelve Labs to download
-    presigned_url = get_presigned_url(video_filename)
+    # 1. Get public URL for Twelve Labs to download
+    public_url = get_public_url(video_filename)
 
-    print(f"[Indexer] Creating index '{index_name}'...")
+    logger.info(f"Creating index '{index_name}'...")
     # 2. Create Index
     index = tl_client.indexes.create(
         index_name=index_name,
         models=[
             IndexesCreateRequestModelsItem(
-                model_name="marengo2.6", model_options=["visual", "audio", "conversation"]
+                model_name="marengo3.0", model_options=["visual", "audio"]
             ),
             IndexesCreateRequestModelsItem(
-                model_name="pegasus1.1", model_options=["visual", "audio"]
+                model_name="pegasus1.2", model_options=["visual", "audio"]
             ),
         ],
         addons=["thumbnail"] 
     )
 
     # 3. Create Asset (Link video to index)
-    print(f"[Indexer] Uploading asset to Index {index.id}...")
+    logger.info(f"Uploading asset to Index {index.id}... [{public_url}]")
     asset = tl_client.assets.create(
-        video_url=presigned_url,
-        index_id=index.id,
+        method="url",
+        url=public_url,
+        filename=video_filename
     )
     
     # 4. Trigger Indexing
@@ -60,36 +64,41 @@ def background_index_processor(video_filename: str, video_db_id: str):
     3. Polls for completion
     4. Updates DB with IDs and status 'ready'
     """
+    start_time = time.time()
     try:
         supabase.table("videos").update({"status": "processing"}).eq("id", video_db_id).execute()
 
         index_id, asset_id = create_index_and_task(video_filename)
-        print(f"[Background] Started Indexing. Index: {index_id}, Asset: {asset_id}")
+        logger.info(f"Started Indexing. Index: {index_id}, Asset: {asset_id}")
 
         # Poll for completion
+        poll_count = 0
         while True:
+            poll_count += 1
+            elapsed = time.time() - start_time
             status_obj = check_status(index_id, asset_id)
-            print(f"[Background] Asset {asset_id} Status: {status_obj.status}")
-            
+            logger.info(f"Poll #{poll_count} | Elapsed: {elapsed:.1f}s | Asset {asset_id} Status: {status_obj.status}")
+
             if status_obj.status == "ready":
-                print(f"[Background] SUCCESS: Video ready for queries. Video ID: {status_obj.id}")
-                
+                total_time = time.time() - start_time
+                logger.info(f"SUCCESS: Video ready for queries. Video ID: {status_obj.id} (took {total_time:.1f}s)")
+
                 supabase.table("videos").update({
                     "status": "ready",
                     "twelvelabs_index_id": index_id,
                     "twelvelabs_video_id": asset_id, # The specific asset ID
                 }).eq("id", video_db_id).execute()
-                print(f"[Indexer] Video {video_db_id} is READY.")
+                logger.info(f"Video {video_db_id} is READY.")
                 break
-            
+
             elif status_obj.status == "failed":
-                print("[Background] FAILURE: Indexing failed.")
+                logger.error("FAILURE: Indexing failed.")
                 supabase.table("videos").update({"status": "failed"}).eq("id", video_db_id).execute()
-                print(f"[Indexer] Video {video_db_id} FAILED.")
+                logger.error(f"Video {video_db_id} FAILED.")
                 break
-                
+
             time.sleep(5)
 
     except Exception as e:
-        print(f"[Background] Error: {e}")
+        logger.exception(f"Error during indexing: {e}")
         supabase.table("videos").update({"status": "failed"}).eq("id", video_db_id).execute()

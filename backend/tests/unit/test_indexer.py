@@ -1,20 +1,22 @@
 import pytest
 from unittest.mock import MagicMock, patch, call
 
-# Import the logic to test
-from ...video_clipping.services.indexer import create_index_and_task, check_status, background_index_processor
+# Import the logic to test (conftest.py adds video_clipping to path)
+from services.indexer import create_index_and_task, check_status, background_index_processor
 
 # --- TEST 1: create_index_and_task ---
 
+@patch("services.indexer.time")
 @patch("services.indexer.tl_client")
-@patch("services.indexer.get_presigned_url")
-def test_create_index_and_task_flow(mock_get_url, mock_tl_client):
+@patch("services.indexer.get_public_url")
+def test_create_index_and_task_flow(mock_get_url, mock_tl_client, mock_time):
     """
-    Verifies that we generate a URL, create an index, create an asset, 
+    Verifies that we generate a URL, create an index, create an asset,
     and trigger the indexing task in the correct order.
     """
     # 1. Setup Mocks
-    mock_get_url.return_value = "http://r2-signed-url.com"
+    mock_get_url.return_value = "http://r2-public-url.com/game.mp4"
+    mock_time.time.return_value = 1234567890
 
     # Mock Index creation return
     mock_index = MagicMock()
@@ -38,14 +40,15 @@ def test_create_index_and_task_flow(mock_get_url, mock_tl_client):
     # Check R2 URL generation
     mock_get_url.assert_called_with("game.mp4")
 
-    # Check Index Creation
+    # Check Index Creation (now includes timestamp)
     mock_tl_client.indexes.create.assert_called_once()
-    assert mock_tl_client.indexes.create.call_args.kwargs['index_name'] == "volleyball_game.mp4"
+    assert mock_tl_client.indexes.create.call_args.kwargs['index_name'] == "volleyball_game.mp4_1234567890"
 
     # Check Asset Creation (linking video to index)
     mock_tl_client.assets.create.assert_called_with(
-        video_url="http://r2-signed-url.com",
-        index_id="idx_123"
+        method="url",
+        url="http://r2-public-url.com/game.mp4",
+        filename="game.mp4"
     )
 
     # Check Task Trigger
