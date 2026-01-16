@@ -1,54 +1,68 @@
 # backend/services/indexer.py
+import os
 import time
-from twelvelabs import Asset, IndexesCreateRequestModelsItem
-from .common import tl_client, get_public_url, supabase, setup_logger
+from twelvelabs import IndexesCreateRequestModelsItem
+from .common import tl_client, download_from_r2, supabase, setup_logger
 
 logger = setup_logger("Indexer")
 
 def create_index_and_task(video_filename: str, index_name: str = None):
     """
-    1. Gets R2 public URL
+    1. Downloads video from R2 to local temp file
     2. Creates a Twelve Labs Index
-    3. Starts the indexing task
+    3. Uploads video directly to TwelveLabs
+    4. Starts the indexing task
+    5. Cleans up local file
     Returns: The new Index ID and the Asset ID (Task)
     """
     if not index_name:
         timestamp = int(time.time())
         index_name = f"volleyball_{video_filename}_{timestamp}"
 
-    # 1. Get public URL for Twelve Labs to download
-    public_url = get_public_url(video_filename)
+    # 1. Download from R2 to local temp file
+    local_path = f"/tmp/{video_filename}"
+    logger.info(f"Downloading {video_filename} from R2...")
+    download_from_r2(video_filename, local_path)
+    logger.info(f"Downloaded to {local_path}")
 
-    logger.info(f"Creating index '{index_name}'...")
-    # 2. Create Index
-    index = tl_client.indexes.create(
-        index_name=index_name,
-        models=[
-            IndexesCreateRequestModelsItem(
-                model_name="marengo3.0", model_options=["visual", "audio"]
-            ),
-            IndexesCreateRequestModelsItem(
-                model_name="pegasus1.2", model_options=["visual", "audio"]
-            ),
-        ],
-        addons=["thumbnail"] 
-    )
+    try:
+        logger.info(f"Creating index '{index_name}'...")
+        # 2. Create Index
+        index = tl_client.indexes.create(
+            index_name=index_name,
+            models=[
+                IndexesCreateRequestModelsItem(
+                    model_name="marengo3.0", model_options=["visual", "audio"]
+                ),
+                IndexesCreateRequestModelsItem(
+                    model_name="pegasus1.2", model_options=["visual", "audio"]
+                ),
+            ],
+            addons=["thumbnail"]
+        )
 
-    # 3. Create Asset (Link video to index)
-    logger.info(f"Uploading asset to Index {index.id}... [{public_url}]")
-    asset = tl_client.assets.create(
-        method="url",
-        url=public_url,
-        filename=video_filename
-    )
-    
-    # 4. Trigger Indexing
-    indexed_asset = tl_client.indexes.indexed_assets.create(
-        index_id=index.id,
-        asset_id=asset.id
-    )
+        # 3. Create Asset (upload file directly)
+        logger.info(f"Uploading asset directly to TwelveLabs Index {index.id}...")
+        with open(local_path, "rb") as video_file:
+            asset = tl_client.assets.create(
+                method="direct",
+                file=video_file,
+                filename=video_filename
+            )
 
-    return index.id, indexed_asset.id
+        # 4. Trigger Indexing
+        indexed_asset = tl_client.indexes.indexed_assets.create(
+            index_id=index.id,
+            asset_id=asset.id
+        )
+
+        return index.id, indexed_asset.id
+
+    finally:
+        # 5. Clean up local file
+        if os.path.exists(local_path):
+            os.remove(local_path)
+            logger.info(f"Cleaned up local file {local_path}")
 
 def check_status(index_id: str, asset_id: str):
     """Checks the status of a specific asset."""

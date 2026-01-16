@@ -26,7 +26,6 @@ R2_ENDPOINT = os.getenv("R2_ENDPOINT")
 R2_ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 R2_SECRET_KEY = os.getenv("R2_SECRET_KEY")
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL")
 TL_API_KEY = os.getenv("TWELVELABS_API_KEY")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -53,6 +52,7 @@ def get_presigned_url(filename: str, expires_in=3600):
         ExpiresIn=expires_in
     )
 
-def get_public_url(filename: str) -> str:
-    """Returns a public R2 URL for external services like Twelve Labs."""
-    return f"{R2_PUBLIC_URL}/{filename}"
+
+def download_from_r2(filename: str, local_path: str):
+    """Downloads a file from R2 to a local path."""
+    s3_client.download_file(R2_BUCKET_NAME, filename, local_path)
