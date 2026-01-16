@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/context/auth-context'
-import type { Job, JobWithVideo, JobWithVideoAndClips } from '@/lib/types/database'
+import type { JobWithVideo, JobWithVideoAndClips } from '@/lib/types/database'
 
 export function useJobs() {
   const [jobs, setJobs] = useState<JobWithVideo[]>([])

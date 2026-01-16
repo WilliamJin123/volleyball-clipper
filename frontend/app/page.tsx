@@ -10,12 +10,12 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="relative px-4 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
               AI-Powered
-              <span className="text-blue-600"> Volleyball </span>
+              <span className="text-foreground/70"> Volleyball </span>
               Clip Generation
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Upload your volleyball videos and let AI find the moments that matter.
               Describe what you&apos;re looking for, and get perfect clips in minutes.
             </p>
@@ -35,9 +35,9 @@ export default function HomePage() {
         </section>
 
         {/* Features Section */}
-        <section className="px-4 py-16 bg-white dark:bg-gray-900/50">
+        <section className="px-4 py-16 bg-card">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-12">
               How It Works
             </h2>
             <div className="grid gap-8 md:grid-cols-3">
@@ -79,7 +79,7 @@ export default function HomePage() {
         {/* Use Cases */}
         <section className="px-4 py-16">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-12">
               Perfect For
             </h2>
             <div className="grid gap-6 md:grid-cols-2">
@@ -104,18 +104,18 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="px-4 py-16 bg-blue-600">
+        <section className="px-4 py-16 bg-foreground">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-background mb-4">
               Ready to find your best plays?
             </h2>
-            <p className="text-blue-100 mb-8">
+            <p className="text-background/70 mb-8">
               Start generating clips from your volleyball videos today.
             </p>
             <Link href="/signup">
               <Button
                 size="lg"
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                className="!bg-background !text-foreground hover:!bg-background/90"
               >
                 Get Started Free
               </Button>
@@ -124,8 +124,8 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="px-4 py-8 border-t border-gray-200 dark:border-gray-800">
-          <div className="max-w-6xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+        <footer className="px-4 py-8 border-t border-border">
+          <div className="max-w-6xl mx-auto text-center text-sm text-muted-foreground">
             <p>Volleyball Clipper - AI-powered video analysis</p>
           </div>
         </footer>
@@ -144,16 +144,16 @@ interface FeatureCardProps {
 function FeatureCard({ step, title, description, icon }: FeatureCardProps) {
   return (
     <div className="text-center p-6">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mb-4">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted text-foreground mb-4">
         {icon}
       </div>
-      <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">
+      <div className="text-sm font-medium text-muted-foreground mb-2">
         Step {step}
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className="text-xl font-semibold text-foreground mb-2">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="text-muted-foreground">{description}</p>
     </div>
   )
 }
@@ -165,11 +165,11 @@ interface UseCaseCardProps {
 
 function UseCaseCard({ title, description }: UseCaseCardProps) {
   return (
-    <div className="p-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+    <div className="p-6 bg-card rounded-xl shadow-card">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="text-muted-foreground">{description}</p>
     </div>
   )
 }

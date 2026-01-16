@@ -4,7 +4,7 @@ import json
 import time
 import ffmpeg
 from twelvelabs import ResponseFormat
-from .common import tl_client, s3_client, R2_BUCKET_NAME, get_public_url, supabase, setup_logger
+from .common import tl_client, s3_client, R2_BUCKET_NAME, get_presigned_url, supabase, setup_logger
 
 logger = setup_logger("Slicer")
 
@@ -44,7 +44,7 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
     """
     Streams from R2 -> FFmpeg Cut -> R2.
     """
-    source_url = get_public_url(video_filename)
+    source_url = get_presigned_url(video_filename)
     clips_metadata = []
     total_segments = len(segments)
 
@@ -53,7 +53,7 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
         end_time = match["end"] + padding
         duration = end_time - start_time
 
-        output_filename = f"clip_{video_filename}_{i}_{int(start_time)}.mp4"
+        output_filename = f"clip_{os.path.basename(video_filename)}_{i}_{int(start_time)}.mp4"
         local_output = f"/tmp/{output_filename}"
 
         r2_dest_key = f"clips/{job_id}/{output_filename}"

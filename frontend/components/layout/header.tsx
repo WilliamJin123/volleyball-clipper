@@ -17,12 +17,12 @@ export function Header() {
   const { user, signOut, loading } = useAuth()
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+    <header className="bg-card/80 backdrop-blur-lg border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="text-xl font-bold text-foreground">
                 Volleyball Clipper
               </span>
             </Link>
@@ -39,8 +39,8 @@ export function Header() {
                         px-3 py-2 rounded-lg text-sm font-medium transition-colors
                         ${
                           isActive
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-muted text-foreground'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         }
                       `}
                     >
@@ -54,10 +54,10 @@ export function Header() {
 
           <div className="flex items-center gap-4">
             {loading ? (
-              <div className="h-9 w-20 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+              <div className="h-9 w-20 bg-muted rounded-lg animate-pulse" />
             ) : user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
+                <span className="text-sm text-muted-foreground hidden sm:block">
                   {user.email}
                 </span>
                 <Button variant="outline" size="sm" onClick={signOut}>
@@ -82,7 +82,7 @@ export function Header() {
 
       {/* Mobile navigation */}
       {user && (
-        <nav className="md:hidden border-t border-gray-200 dark:border-gray-800 px-4 py-2">
+        <nav className="md:hidden border-t border-border px-4 py-2">
           <div className="flex gap-1 overflow-x-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -94,8 +94,8 @@ export function Header() {
                     px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
                     ${
                       isActive
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground'
                     }
                   `}
                 >

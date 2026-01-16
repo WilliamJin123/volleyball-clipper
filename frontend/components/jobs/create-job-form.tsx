@@ -6,7 +6,26 @@ import { useVideos } from '@/lib/hooks'
 import { useAuth } from '@/lib/context/auth-context'
 import { createClient } from '@/lib/supabase/client'
 import { triggerJobProcessing } from '@/lib/api'
-import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, StatusBadge } from '@/components/ui'
+import {
+  Button,
+  Input,
+  Textarea,
+  Label,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  StatusBadge,
+  Alert,
+  AlertDescription,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui'
 import type { JobStatus } from '@/lib/types/database'
 
 interface CreateJobFormProps {
@@ -94,21 +113,19 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Video selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Select Video
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="video-select">Select Video</Label>
             {videosLoading ? (
-              <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+              <div className="h-10 bg-muted rounded-lg animate-pulse" />
             ) : readyVideos.length === 0 ? (
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              <Alert variant="warning">
+                <AlertDescription>
                   No videos are ready for processing.{' '}
                   <button
                     type="button"
@@ -118,29 +135,32 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
                     Upload a video
                   </button>{' '}
                   first.
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
             ) : (
-              <select
+              <Select
                 value={selectedVideoId}
-                onChange={(e) => setSelectedVideoId(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                onValueChange={setSelectedVideoId}
               >
-                <option value="">Select a video...</option>
-                {readyVideos.map((video) => (
-                  <option key={video.id} value={video.id}>
-                    {video.filename}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="video-select">
+                  <SelectValue placeholder="Select a video..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {readyVideos.map((video) => (
+                    <SelectItem key={video.id} value={video.id}>
+                      {video.filename}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
           {/* Query input */}
-          <div>
+          <div className="space-y-2">
+            <Label htmlFor="query">What moments do you want to find?</Label>
             <Textarea
-              label="What moments do you want to find?"
+              id="query"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g., Me setting the ball to the outside hitter"
@@ -148,7 +168,7 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
               rows={3}
             />
             <div className="mt-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <p className="text-xs text-muted-foreground mb-2">
                 Example queries:
               </p>
               <div className="flex flex-wrap gap-2">
@@ -157,7 +177,7 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
                     key={example}
                     type="button"
                     onClick={() => setQuery(example)}
-                    className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    className="px-2 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
                   >
                     {example}
                   </button>
@@ -167,9 +187,10 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
           </div>
 
           {/* Padding input */}
-          <div>
+          <div className="space-y-2">
+            <Label htmlFor="padding">Clip padding (seconds)</Label>
             <Input
-              label="Clip padding (seconds)"
+              id="padding"
               type="number"
               value={padding}
               onChange={(e) => setPadding(Number(e.target.value))}
@@ -177,7 +198,7 @@ export function CreateJobForm({ preselectedVideoId, onSuccess }: CreateJobFormPr
               max={10}
               step={0.5}
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Extra time added before and after each detected moment
             </p>
           </div>
@@ -223,14 +244,14 @@ export function VideoSelectionCard({
         w-full p-4 rounded-lg border text-left transition-all
         ${
           selected
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            ? 'border-primary bg-primary/10'
+            : 'border-border hover:border-muted-foreground/50'
         }
         ${!isReady ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
       <div className="flex items-center justify-between">
-        <span className="font-medium text-gray-900 dark:text-white truncate">
+        <span className="font-medium text-foreground truncate">
           {filename}
         </span>
         <StatusBadge status={status} />

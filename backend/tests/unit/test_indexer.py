@@ -8,7 +8,7 @@ from services.indexer import create_index_and_task, check_status, background_ind
 
 @patch("services.indexer.time")
 @patch("services.indexer.tl_client")
-@patch("services.indexer.get_public_url")
+@patch("services.indexer.get_presigned_url")
 def test_create_index_and_task_flow(mock_get_url, mock_tl_client, mock_time):
     """
     Verifies that we generate a URL, create an index, create an asset,
@@ -38,7 +38,7 @@ def test_create_index_and_task_flow(mock_get_url, mock_tl_client, mock_time):
 
     # 3. Assertions
     # Check R2 URL generation
-    mock_get_url.assert_called_with("game.mp4")
+    mock_get_url.assert_called_with("game.mp4", expires_in=7200)
 
     # Check Index Creation (now includes timestamp)
     mock_tl_client.indexes.create.assert_called_once()

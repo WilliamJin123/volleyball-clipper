@@ -15,15 +15,15 @@ function StatCard({ title, value, loading, icon }: StatCardProps) {
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+          <div className="p-3 rounded-lg bg-muted text-foreground">
             {icon}
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
             {loading ? (
-              <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-1" />
+              <div className="h-8 w-16 bg-muted rounded animate-pulse mt-1" />
             ) : (
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-foreground">
                 {value}
               </p>
             )}

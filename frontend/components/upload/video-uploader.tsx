@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/context/auth-context'
 import { triggerVideoIndexing } from '@/lib/api'
-import { Button, Card, CardContent } from '@/components/ui'
+import { Button, Card, CardContent, Progress, Alert, AlertDescription } from '@/components/ui'
+import { toast } from 'sonner'
+import { Upload } from 'lucide-react'
 
 interface UploadProgress {
   status: 'idle' | 'uploading' | 'processing' | 'indexing' | 'complete' | 'error'
@@ -44,6 +46,13 @@ export function VideoUploader() {
     const droppedFile = e.dataTransfer.files?.[0]
     if (droppedFile && droppedFile.type.startsWith('video/')) {
       setFile(droppedFile)
+      toast.success('Video selected', {
+        description: droppedFile.name,
+      })
+    } else {
+      toast.error('Invalid file type', {
+        description: 'Please select a video file',
+      })
     }
   }, [])
 
@@ -51,6 +60,9 @@ export function VideoUploader() {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
+      toast.success('Video selected', {
+        description: selectedFile.name,
+      })
     }
   }
 
@@ -157,16 +169,24 @@ export function VideoUploader() {
         message: 'Upload complete! Redirecting...',
       })
 
+      toast.success('Upload complete!', {
+        description: 'Your video is now being processed.',
+      })
+
       // Redirect to dashboard after short delay
       setTimeout(() => {
         router.push('/dashboard')
       }, 1500)
     } catch (error) {
       console.error('Upload error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed'
       setUploadProgress({
         status: 'error',
         progress: 0,
-        message: error instanceof Error ? error.message : 'Upload failed',
+        message: errorMessage,
+      })
+      toast.error('Upload failed', {
+        description: errorMessage,
       })
     }
   }
@@ -188,8 +208,8 @@ export function VideoUploader() {
         <div
           className={`
             relative border-2 border-dashed rounded-xl p-12 text-center transition-colors
-            ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-700'}
-            ${isUploading ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-600'}
+            ${dragActive ? 'border-primary bg-primary/5' : 'border-border'}
+            ${isUploading ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:border-muted-foreground/50'}
           `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -207,37 +227,25 @@ export function VideoUploader() {
           />
 
           <div className="space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+              <Upload className="w-8 h-8 text-muted-foreground" />
             </div>
 
             {file ? (
               <div>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">
+                <p className="text-lg font-medium text-foreground">
                   {file.name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {(file.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
             ) : (
               <div>
-                <p className="text-lg font-medium text-gray-900 dark:text-white">
+                <p className="text-lg font-medium text-foreground">
                   Drop your video here or click to browse
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   Supports MP4, MOV, AVI, and other common video formats
                 </p>
               </div>
@@ -249,35 +257,31 @@ export function VideoUploader() {
         {uploadProgress.status !== 'idle' && (
           <div className="mt-6 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-muted-foreground">
                 {uploadProgress.message}
               </span>
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-muted-foreground">
                 {uploadProgress.progress}%
               </span>
             </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-300 ${
-                  uploadProgress.status === 'error'
-                    ? 'bg-red-500'
-                    : uploadProgress.status === 'complete'
-                    ? 'bg-green-500'
-                    : 'bg-blue-500'
-                }`}
-                style={{ width: `${uploadProgress.progress}%` }}
-              />
-            </div>
+            <Progress
+              value={uploadProgress.progress}
+              className={`h-2 ${
+                uploadProgress.status === 'error'
+                  ? '[&>div]:bg-destructive'
+                  : uploadProgress.status === 'complete'
+                  ? '[&>div]:bg-success'
+                  : ''
+              }`}
+            />
           </div>
         )}
 
         {/* Error state */}
         {uploadProgress.status === 'error' && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {uploadProgress.message}
-            </p>
-          </div>
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{uploadProgress.message}</AlertDescription>
+          </Alert>
         )}
 
         {/* Action buttons */}
