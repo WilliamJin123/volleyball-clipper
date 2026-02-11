@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/context/auth-context'
 import { triggerVideoIndexing } from '@/lib/api'
-import { Button, Card, CardContent, Progress, Alert, AlertDescription } from '@/components/ui'
-import { toast } from 'sonner'
-import { Upload } from 'lucide-react'
 
 interface UploadProgress {
   status: 'idle' | 'uploading' | 'processing' | 'indexing' | 'complete' | 'error'
@@ -46,13 +43,6 @@ export function VideoUploader() {
     const droppedFile = e.dataTransfer.files?.[0]
     if (droppedFile && droppedFile.type.startsWith('video/')) {
       setFile(droppedFile)
-      toast.success('Video selected', {
-        description: droppedFile.name,
-      })
-    } else {
-      toast.error('Invalid file type', {
-        description: 'Please select a video file',
-      })
     }
   }, [])
 
@@ -60,9 +50,6 @@ export function VideoUploader() {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
-      toast.success('Video selected', {
-        description: selectedFile.name,
-      })
     }
   }
 
@@ -76,7 +63,6 @@ export function VideoUploader() {
         message: 'Getting upload URL...',
       })
 
-      // Get presigned upload URL
       const urlResponse = await fetch('/api/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -98,7 +84,6 @@ export function VideoUploader() {
         message: 'Uploading video...',
       })
 
-      // Upload file to R2
       const xhr = new XMLHttpRequest()
 
       await new Promise<void>((resolve, reject) => {
@@ -134,7 +119,6 @@ export function VideoUploader() {
         message: 'Creating video record...',
       })
 
-      // Create video record in database
       const { data: video, error: dbError } = await supabase
         .from('videos')
         .insert({
@@ -154,10 +138,8 @@ export function VideoUploader() {
         message: 'Starting video indexing...',
       })
 
-      // Trigger indexing
       await triggerVideoIndexing(r2Path, video.id)
 
-      // Update status to processing
       await supabase
         .from('videos')
         .update({ status: 'processing' })
@@ -169,11 +151,6 @@ export function VideoUploader() {
         message: 'Upload complete! Redirecting...',
       })
 
-      toast.success('Upload complete!', {
-        description: 'Your video is now being processed.',
-      })
-
-      // Redirect to dashboard after short delay
       setTimeout(() => {
         router.push('/dashboard')
       }, 1500)
@@ -184,9 +161,6 @@ export function VideoUploader() {
         status: 'error',
         progress: 0,
         message: errorMessage,
-      })
-      toast.error('Upload failed', {
-        description: errorMessage,
       })
     }
   }
@@ -202,102 +176,54 @@ export function VideoUploader() {
   const isUploading = uploadProgress.status !== 'idle' && uploadProgress.status !== 'error'
 
   return (
-    <Card>
-      <CardContent className="p-8">
-        {/* Drag and drop zone */}
-        <div
-          className={`
-            relative border-2 border-dashed rounded-xl p-12 text-center transition-colors
-            ${dragActive ? 'border-primary bg-primary/5' : 'border-border'}
-            ${isUploading ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:border-muted-foreground/50'}
-          `}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => !isUploading && inputRef.current?.click()}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-
-          <div className="space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <Upload className="w-8 h-8 text-muted-foreground" />
-            </div>
-
-            {file ? (
-              <div>
-                <p className="text-lg font-medium text-foreground">
-                  {file.name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-lg font-medium text-foreground">
-                  Drop your video here or click to browse
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Supports MP4, MOV, AVI, and other common video formats
-                </p>
-              </div>
-            )}
+    <div>
+      <div
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={() => !isUploading && inputRef.current?.click()}
+        style={{ border: dragActive ? '2px dashed blue' : '2px dashed gray', padding: '2rem', cursor: isUploading ? 'default' : 'pointer' }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+          disabled={isUploading}
+        />
+        {file ? (
+          <div>
+            <p><strong>{file.name}</strong></p>
+            <p>{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
           </div>
-        </div>
-
-        {/* Progress bar */}
-        {uploadProgress.status !== 'idle' && (
-          <div className="mt-6 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                {uploadProgress.message}
-              </span>
-              <span className="text-muted-foreground">
-                {uploadProgress.progress}%
-              </span>
-            </div>
-            <Progress
-              value={uploadProgress.progress}
-              className={`h-2 ${
-                uploadProgress.status === 'error'
-                  ? '[&>div]:bg-destructive'
-                  : uploadProgress.status === 'complete'
-                  ? '[&>div]:bg-success'
-                  : ''
-              }`}
-            />
-          </div>
+        ) : (
+          <p>Drop your video here or click to browse</p>
         )}
+      </div>
 
-        {/* Error state */}
-        {uploadProgress.status === 'error' && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertDescription>{uploadProgress.message}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Action buttons */}
-        <div className="mt-6 flex gap-3">
-          {file && uploadProgress.status === 'idle' && (
-            <Button onClick={uploadFile} className="flex-1">
-              Upload Video
-            </Button>
-          )}
-          {(file || uploadProgress.status === 'error') && !isUploading && (
-            <Button variant="outline" onClick={resetUpload}>
-              {uploadProgress.status === 'error' ? 'Try Again' : 'Cancel'}
-            </Button>
-          )}
+      {uploadProgress.status !== 'idle' && (
+        <div>
+          <p>{uploadProgress.message} — {uploadProgress.progress}%</p>
+          <progress value={uploadProgress.progress} max={100} />
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {uploadProgress.status === 'error' && (
+        <p role="alert">{uploadProgress.message}</p>
+      )}
+
+      <div>
+        {file && uploadProgress.status === 'idle' && (
+          <button onClick={uploadFile}>Upload Video</button>
+        )}
+        {(file || uploadProgress.status === 'error') && !isUploading && (
+          <button onClick={resetUpload}>
+            {uploadProgress.status === 'error' ? 'Try Again' : 'Cancel'}
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
