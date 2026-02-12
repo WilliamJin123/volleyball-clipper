@@ -13,13 +13,9 @@ create policy "Users can view own videos" on videos for select using (auth.uid()
 create policy "Users can insert own videos" on videos for insert with check (auth.uid() = user_id);
 create policy "Users can delete own videos" on videos for delete using (auth.uid() = user_id);
 
--- JOBS: Users can see jobs linked to their videos
-create policy "Users can view own jobs" on jobs for select using (
-  exists (select 1 from videos where videos.id = jobs.video_id and videos.user_id = auth.uid())
-);
-create policy "Users can insert own jobs" on jobs for insert with check (
-  exists (select 1 from videos where videos.id = jobs.video_id and videos.user_id = auth.uid())
-);
+-- JOBS: Users can see/create their own jobs
+create policy "Users can view own jobs" on jobs for select using (auth.uid() = user_id);
+create policy "Users can insert own jobs" on jobs for insert with check (auth.uid() = user_id);
 
 -- CLIPS: Users can see clips linked to their jobs
 create policy "Users can view own clips" on clips for select using (

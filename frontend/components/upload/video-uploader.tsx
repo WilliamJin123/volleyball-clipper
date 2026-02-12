@@ -1,29 +1,44 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/context/auth-context'
+import { useVideos } from '@/lib/hooks/use-videos'
 import { triggerVideoIndexing } from '@/lib/api'
 
-interface UploadProgress {
-  status: 'idle' | 'uploading' | 'processing' | 'indexing' | 'complete' | 'error'
+export type UploadStatus = 'idle' | 'uploading' | 'processing' | 'complete' | 'error'
+
+export interface UploadState {
+  status: UploadStatus
   progress: number
   message: string
+  videoId?: string
+  filename?: string
+  fileSize?: number
 }
 
-export function VideoUploader() {
-  const [file, setFile] = useState<File | null>(null)
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({
+interface VideoUploaderProps {
+  onUploadStateChange?: (state: UploadState) => void
+}
+
+export function VideoUploader({ onUploadStateChange }: VideoUploaderProps) {
+  const [uploadState, setUploadState] = useState<UploadState>({
     status: 'idle',
     progress: 0,
     message: '',
   })
   const [dragActive, setDragActive] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
+  const xhrRef = useRef<XMLHttpRequest | null>(null)
   const { user } = useAuth()
-  const supabase = createClient()
+  const { createVideo } = useVideos()
+
+  const updateState = useCallback(
+    (state: UploadState) => {
+      setUploadState(state)
+      onUploadStateChange?.(state)
+    },
+    [onUploadStateChange]
+  )
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -35,195 +50,244 @@ export function VideoUploader() {
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+  const processFile = useCallback(
+    async (file: File) => {
+      if (!user) return
+      if (!file.type.startsWith('video/')) return
 
-    const droppedFile = e.dataTransfer.files?.[0]
-    if (droppedFile && droppedFile.type.startsWith('video/')) {
-      setFile(droppedFile)
-    }
-  }, [])
+      // Max 2GB check
+      if (file.size > 2 * 1024 * 1024 * 1024) {
+        updateState({
+          status: 'error',
+          progress: 0,
+          message: 'File exceeds 2GB limit',
+          filename: file.name,
+          fileSize: file.size,
+        })
+        return
+      }
+
+      try {
+        updateState({
+          status: 'uploading',
+          progress: 0,
+          message: 'Getting upload URL...',
+          filename: file.name,
+          fileSize: file.size,
+        })
+
+        // 1. Get presigned URL
+        const urlResponse = await fetch('/api/upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+          }),
+        })
+
+        if (!urlResponse.ok) {
+          throw new Error('Failed to get upload URL')
+        }
+
+        const { uploadUrl, r2Path, filename } = await urlResponse.json()
+
+        // 2. Upload to R2 via XHR for progress tracking
+        const xhr = new XMLHttpRequest()
+        xhrRef.current = xhr
+
+        await new Promise<void>((resolve, reject) => {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const pct = Math.round((event.loaded / event.total) * 100)
+              updateState({
+                status: 'uploading',
+                progress: pct,
+                message: `Uploading... ${pct}%`,
+                filename: file.name,
+                fileSize: file.size,
+              })
+            }
+          })
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve()
+            } else {
+              reject(new Error('Upload failed'))
+            }
+          })
+
+          xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+          xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')))
+
+          xhr.open('PUT', uploadUrl)
+          xhr.setRequestHeader('Content-Type', file.type)
+          xhr.send(file)
+        })
+
+        xhrRef.current = null
+
+        // 3. Create video record in Supabase
+        updateState({
+          status: 'processing',
+          progress: 100,
+          message: 'Creating video record...',
+          filename: file.name,
+          fileSize: file.size,
+        })
+
+        const video = await createVideo(r2Path, filename)
+
+        // 4. Trigger indexing on backend
+        updateState({
+          status: 'processing',
+          progress: 100,
+          message: 'Starting indexing...',
+          filename: file.name,
+          fileSize: file.size,
+          videoId: video.id,
+        })
+
+        await triggerVideoIndexing(r2Path, video.id)
+
+        // 5. Done -- realtime subscription in useVideos will track indexing progress
+        updateState({
+          status: 'complete',
+          progress: 100,
+          message: 'Upload complete',
+          filename: file.name,
+          fileSize: file.size,
+          videoId: video.id,
+        })
+
+        // Reset after brief delay
+        setTimeout(() => {
+          updateState({ status: 'idle', progress: 0, message: '' })
+        }, 2000)
+      } catch (error) {
+        console.error('Upload error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+        updateState({
+          status: 'error',
+          progress: 0,
+          message: errorMessage,
+          filename: file.name,
+          fileSize: file.size,
+        })
+      }
+    },
+    [user, createVideo, updateState]
+  )
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setDragActive(false)
+
+      const droppedFile = e.dataTransfer.files?.[0]
+      if (droppedFile && droppedFile.type.startsWith('video/')) {
+        processFile(droppedFile)
+      }
+    },
+    [processFile]
+  )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      setFile(selectedFile)
+      processFile(selectedFile)
     }
+    // Reset input so the same file can be re-selected
+    if (inputRef.current) inputRef.current.value = ''
   }
 
-  const uploadFile = async () => {
-    if (!file || !user) return
-
-    try {
-      setUploadProgress({
-        status: 'uploading',
-        progress: 0,
-        message: 'Getting upload URL...',
-      })
-
-      const urlResponse = await fetch('/api/upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-        }),
-      })
-
-      if (!urlResponse.ok) {
-        throw new Error('Failed to get upload URL')
-      }
-
-      const { uploadUrl, r2Path, filename } = await urlResponse.json()
-
-      setUploadProgress({
-        status: 'uploading',
-        progress: 10,
-        message: 'Uploading video...',
-      })
-
-      const xhr = new XMLHttpRequest()
-
-      await new Promise<void>((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 80)
-            setUploadProgress({
-              status: 'uploading',
-              progress: 10 + percentComplete,
-              message: `Uploading... ${Math.round(percentComplete / 80 * 100)}%`,
-            })
-          }
-        })
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve()
-          } else {
-            reject(new Error('Upload failed'))
-          }
-        })
-
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
-
-        xhr.open('PUT', uploadUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
-      })
-
-      setUploadProgress({
-        status: 'processing',
-        progress: 92,
-        message: 'Creating video record...',
-      })
-
-      const { data: video, error: dbError } = await supabase
-        .from('videos')
-        .insert({
-          user_id: user.id,
-          r2_path: r2Path,
-          filename: filename,
-          status: 'uploading',
-        })
-        .select()
-        .single()
-
-      if (dbError) throw dbError
-
-      setUploadProgress({
-        status: 'indexing',
-        progress: 96,
-        message: 'Starting video indexing...',
-      })
-
-      await triggerVideoIndexing(r2Path, video.id)
-
-      await supabase
-        .from('videos')
-        .update({ status: 'processing' })
-        .eq('id', video.id)
-
-      setUploadProgress({
-        status: 'complete',
-        progress: 100,
-        message: 'Upload complete! Redirecting...',
-      })
-
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 1500)
-    } catch (error) {
-      console.error('Upload error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed'
-      setUploadProgress({
-        status: 'error',
-        progress: 0,
-        message: errorMessage,
-      })
-    }
+  const handleClick = () => {
+    if (isUploading) return
+    inputRef.current?.click()
   }
 
-  const resetUpload = () => {
-    setFile(null)
-    setUploadProgress({ status: 'idle', progress: 0, message: '' })
-    if (inputRef.current) {
-      inputRef.current.value = ''
-    }
-  }
-
-  const isUploading = uploadProgress.status !== 'idle' && uploadProgress.status !== 'error'
+  const isUploading =
+    uploadState.status === 'uploading' || uploadState.status === 'processing'
 
   return (
-    <div>
-      <div
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-        onClick={() => !isUploading && inputRef.current?.click()}
-        style={{ border: dragActive ? '2px dashed blue' : '2px dashed gray', padding: '2rem', cursor: isUploading ? 'default' : 'pointer' }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="video/*"
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-          disabled={isUploading}
-        />
-        {file ? (
-          <div>
-            <p><strong>{file.name}</strong></p>
-            <p>{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-          </div>
-        ) : (
-          <p>Drop your video here or click to browse</p>
-        )}
-      </div>
+    <div
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+      onClick={handleClick}
+      className={`
+        relative h-[160px] flex flex-col items-center justify-center gap-2
+        border-2 border-dashed rounded-sm cursor-pointer
+        transition-all duration-200
+        ${
+          dragActive
+            ? 'border-border-bright bg-[rgba(15,15,20,0.7)]'
+            : 'border-border-dim bg-[rgba(15,15,20,0.5)]'
+        }
+        ${isUploading ? 'pointer-events-none opacity-60' : ''}
+        hover:border-border-bright hover:bg-[rgba(15,15,20,0.7)]
+        group
+      `}
+      style={
+        dragActive
+          ? {
+              boxShadow:
+                '0 0 32px var(--accent-primary-glow), inset 0 0 32px rgba(255, 90, 31, 0.03)',
+            }
+          : undefined
+      }
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={handleFileChange}
+        disabled={isUploading}
+      />
 
-      {uploadProgress.status !== 'idle' && (
-        <div>
-          <p>{uploadProgress.message} — {uploadProgress.progress}%</p>
-          <progress value={uploadProgress.progress} max={100} />
+      {isUploading ? (
+        <div className="flex flex-col items-center gap-2">
+          <span className="font-mono text-[1.5rem] leading-none text-accent-primary">
+            {'\u2191'}
+          </span>
+          <span className="font-body text-sm text-text-secondary">
+            {uploadState.message}
+          </span>
+          <div className="w-[200px] h-[3px] bg-bg-raised rounded-sm overflow-hidden mt-1">
+            <div
+              className="h-full rounded-sm bg-accent-primary transition-[width] duration-300"
+              style={{
+                width: `${uploadState.progress}%`,
+                boxShadow: '0 0 8px var(--accent-primary-glow)',
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          <span className="font-mono text-[1.5rem] leading-none text-text-dim group-hover:text-accent-primary transition-colors duration-200 group-hover:[text-shadow:0_0_16px_var(--accent-primary-glow)]">
+            {'\u2191'}
+          </span>
+          <span className="font-body text-sm text-text-secondary">
+            Drop video file or click to browse
+          </span>
+          <span className="font-mono text-[0.6875rem] text-text-dim">
+            MP4, MOV, AVI &middot; Max 2GB
+          </span>
+        </>
+      )}
+
+      {uploadState.status === 'error' && (
+        <div className="absolute bottom-3 left-0 right-0 text-center">
+          <span className="font-mono text-[0.6875rem] text-accent-error">
+            {uploadState.message}
+          </span>
         </div>
       )}
-
-      {uploadProgress.status === 'error' && (
-        <p role="alert">{uploadProgress.message}</p>
-      )}
-
-      <div>
-        {file && uploadProgress.status === 'idle' && (
-          <button onClick={uploadFile}>Upload Video</button>
-        )}
-        {(file || uploadProgress.status === 'error') && !isUploading && (
-          <button onClick={resetUpload}>
-            {uploadProgress.status === 'error' ? 'Try Again' : 'Cancel'}
-          </button>
-        )}
-      </div>
     </div>
   )
 }

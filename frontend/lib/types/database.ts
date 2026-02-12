@@ -127,6 +127,8 @@ export interface Database {
           public_url: string
           start_time: number
           end_time: number
+          thumbnail_r2_path: string | null
+          thumbnail_url: string | null
           created_at: string
         }
         Insert: {
@@ -136,6 +138,8 @@ export interface Database {
           public_url: string
           start_time: number
           end_time: number
+          thumbnail_r2_path?: string | null
+          thumbnail_url?: string | null
           created_at?: string
         }
         Update: {
@@ -145,6 +149,8 @@ export interface Database {
           public_url?: string
           start_time?: number
           end_time?: number
+          thumbnail_r2_path?: string | null
+          thumbnail_url?: string | null
           created_at?: string
         }
         Relationships: [

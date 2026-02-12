@@ -1,26 +1,126 @@
 'use client'
 
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useJobs } from '@/lib/hooks'
+import { FusedBar } from '@/components/ui/fused-bar'
+import { NetDivider } from '@/components/ui/net-divider'
 import type { JobWithVideo } from '@/lib/types/database'
+import type { JobStatus } from '@/lib/types/database'
 
-function formatDate(dateString: string) {
+type FilterTab = 'all' | 'active' | 'complete' | 'failed'
+
+function relativeTime(dateString: string): string {
+  const now = Date.now()
+  const then = new Date(dateString).getTime()
+  const diffMs = now - then
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHr = Math.floor(diffMin / 60)
+  const diffDay = Math.floor(diffHr / 24)
+
+  if (diffSec < 60) return 'just now'
+  if (diffMin < 60) return `${diffMin}m ago`
+  if (diffHr < 24) return `${diffHr}h ago`
+  if (diffDay < 30) return `${diffDay}d ago`
   return new Date(dateString).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   })
 }
 
-function JobCard({ job }: { job: JobWithVideo }) {
+function filterJobs(jobs: JobWithVideo[], tab: FilterTab): JobWithVideo[] {
+  switch (tab) {
+    case 'active':
+      return jobs.filter((j) => j.status === 'pending' || j.status === 'processing')
+    case 'complete':
+      return jobs.filter((j) => j.status === 'completed')
+    case 'failed':
+      return jobs.filter((j) => j.status === 'failed')
+    default:
+      return jobs
+  }
+}
+
+function getRowHoverClass(status: JobStatus): string {
+  switch (status) {
+    case 'failed':
+      return 'border-accent-error/20 hover:border-accent-error/35'
+    case 'completed':
+      return 'hover:border-border-bright'
+    case 'processing':
+    case 'pending':
+      return 'hover:border-border-bright'
+    default:
+      return 'hover:border-border-bright'
+  }
+}
+
+function getRowGlowStyle(status: JobStatus): React.CSSProperties {
+  switch (status) {
+    case 'failed':
+      return { boxShadow: '0 0 12px rgba(239, 68, 68, 0.08)' }
+    case 'completed':
+      return { boxShadow: '0 0 12px rgba(34, 197, 94, 0.08)' }
+    case 'processing':
+    case 'pending':
+      return { boxShadow: '0 0 12px rgba(255, 90, 31, 0.08)' }
+    default:
+      return {}
+  }
+}
+
+function JobRow({ job }: { job: JobWithVideo }) {
+  const [hovered, setHovered] = useState(false)
+  const clipCount = (job as JobWithVideo & { clips?: unknown[] }).clips?.length
+  const displayName = job.videos?.filename || 'Untitled Job'
+
   return (
-    <Link href={`/jobs/${job.id}`}>
-      <div>
-        <p><strong>{job.query}</strong></p>
-        <p>Video: {job.videos?.filename || 'Unknown'}</p>
-        <p>Status: {job.status}</p>
-        <p>{formatDate(job.created_at)}</p>
+    <Link href={`/jobs/${job.id}`} className="block">
+      <div
+        className={`
+          grid items-center px-5 py-4
+          bg-bg-surface border border-border-dim rounded-sm
+          cursor-pointer transition-all duration-150
+          ${getRowHoverClass(job.status)}
+        `}
+        style={{
+          gridTemplateColumns: '1fr 320px 80px 100px',
+          ...(hovered ? getRowGlowStyle(job.status) : {}),
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {/* Job Info */}
+        <div className="min-w-0 pr-4">
+          <p className="font-display text-sm font-bold text-text-primary truncate">
+            {displayName}
+          </p>
+          <p className="font-mono text-xs text-text-dim truncate">
+            &quot;{job.query}&quot;
+          </p>
+        </div>
+
+        {/* Fused Bar */}
+        <div className="px-2">
+          <FusedBar status={job.status} clipCount={clipCount} />
+        </div>
+
+        {/* Clips */}
+        <div className="text-center">
+          <span className="font-mono text-xs text-text-secondary">
+            {job.status === 'completed' && clipCount !== undefined
+              ? clipCount
+              : '\u2014'}
+          </span>
+        </div>
+
+        {/* Time */}
+        <div className="text-right">
+          <span className="font-mono text-xs text-text-dim">
+            {relativeTime(job.created_at)}
+          </span>
+        </div>
       </div>
     </Link>
   )
@@ -28,24 +128,176 @@ function JobCard({ job }: { job: JobWithVideo }) {
 
 export function JobList() {
   const { jobs, loading, error } = useJobs()
+  const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0, ready: false })
+  const [tabCanAnimate, setTabCanAnimate] = useState(false)
 
-  if (loading) return <p>Loading...</p>
-  if (error) return <p role="alert">{error}</p>
+  const tabs: { key: FilterTab; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Active' },
+    { key: 'complete', label: 'Complete' },
+    { key: 'failed', label: 'Failed' },
+  ]
 
-  if (jobs.length === 0) {
-    return (
-      <div>
-        <p>No jobs yet</p>
-        <Link href="/jobs/new">Create Job</Link>
-      </div>
-    )
-  }
+  const measureTab = useCallback(() => {
+    const container = tabsRef.current
+    if (!container) return null
+    const activeEl = container.querySelector('[data-active="true"]') as HTMLElement
+    if (!activeEl) return null
+    const containerRect = container.getBoundingClientRect()
+    const elRect = activeEl.getBoundingClientRect()
+    return { left: elRect.left - containerRect.left, width: elRect.width }
+  }, [])
+
+  useEffect(() => {
+    const pos = measureTab()
+    if (!pos) return
+    setTabIndicator({ ...pos, ready: true })
+  }, [activeTab, measureTab])
+
+  useEffect(() => {
+    if (tabIndicator.ready && !tabCanAnimate) {
+      requestAnimationFrame(() => setTabCanAnimate(true))
+    }
+  }, [tabIndicator.ready, tabCanAnimate])
+
+  const filteredJobs = useMemo(() => {
+    let result = filterJobs(jobs, activeTab)
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((job) => {
+        const query = job.query.toLowerCase()
+        const filename = job.videos?.filename?.toLowerCase() || ''
+        const id = job.id.toLowerCase()
+        return query.includes(q) || filename.includes(q) || id.includes(q)
+      })
+    }
+
+    return result
+  }, [jobs, activeTab, searchQuery])
 
   return (
     <div>
-      {jobs.map((job) => (
-        <JobCard key={job.id} job={job} />
-      ))}
+      {/* Filter Tabs + Search */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        {/* Left: Filter tabs */}
+        <div ref={tabsRef} className="relative flex">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              data-active={activeTab === tab.key}
+              className={`
+                font-mono text-xs px-4 py-2 cursor-pointer
+                transition-colors duration-150 relative
+                ${
+                  activeTab === tab.key
+                    ? 'text-accent-primary'
+                    : 'text-text-dim hover:text-text-secondary'
+                }
+              `}
+            >
+              {tab.label}
+            </button>
+          ))}
+
+          {/* Sliding indicator */}
+          <span
+            className={`absolute bottom-0 h-px bg-accent-primary pointer-events-none ${
+              tabCanAnimate ? 'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''
+            }`}
+            style={{
+              left: `${tabIndicator.left}px`,
+              width: `${tabIndicator.width}px`,
+              opacity: tabIndicator.ready ? 1 : 0,
+              boxShadow: '0 0 8px rgba(255, 90, 31, 0.5)',
+            }}
+          />
+        </div>
+
+        {/* Right: Search */}
+        <input
+          type="text"
+          placeholder="Search jobs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="font-mono text-xs px-3.5 py-1.5 rounded-sm border border-border-dim bg-bg-surface text-text-primary w-[200px] placeholder:text-text-dim outline-none transition-all duration-150 focus:border-border-bright"
+          style={{ boxShadow: 'none' }}
+          onFocus={(e) => {
+            e.currentTarget.style.boxShadow = '0 0 8px rgba(255, 90, 31, 0.08)'
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        />
+      </div>
+
+      {/* Net Divider */}
+      <NetDivider className="!my-4" />
+
+      {/* Column Headers */}
+      <div
+        className="grid px-5 pb-3"
+        style={{ gridTemplateColumns: '1fr 320px 80px 100px' }}
+      >
+        <span className="font-mono text-[0.625rem] text-text-dim uppercase tracking-widest">
+          Job
+        </span>
+        <span className="font-mono text-[0.625rem] text-text-dim uppercase tracking-widest px-2">
+          Status
+        </span>
+        <span className="font-mono text-[0.625rem] text-text-dim uppercase tracking-widest text-center">
+          Clips
+        </span>
+        <span className="font-mono text-[0.625rem] text-text-dim uppercase tracking-widest text-right">
+          Time
+        </span>
+      </div>
+
+      {/* Job List */}
+      {loading ? (
+        <div className="flex flex-col gap-0.5">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-[68px] bg-bg-surface border border-border-dim rounded-sm animate-pulse"
+            />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="bg-bg-surface border border-accent-error/20 rounded-sm px-5 py-8 text-center">
+          <p className="font-mono text-xs text-accent-error" role="alert">
+            {error}
+          </p>
+        </div>
+      ) : filteredJobs.length === 0 ? (
+        <div className="bg-bg-surface border border-border-dim rounded-sm px-5 py-12 text-center">
+          <p className="font-mono text-xs text-text-dim mb-3">
+            {searchQuery
+              ? 'No jobs match your search.'
+              : activeTab === 'all'
+                ? 'No jobs yet. Create your first clip job.'
+                : `No ${activeTab} jobs.`}
+          </p>
+          {activeTab === 'all' && !searchQuery && (
+            <Link
+              href="/jobs/new"
+              className="inline-block font-mono text-xs text-accent-primary hover:text-accent-primary/80 transition-colors"
+            >
+              + Create Job
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-0.5">
+          {filteredJobs.map((job) => (
+            <JobRow key={job.id} job={job} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

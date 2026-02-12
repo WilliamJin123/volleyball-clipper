@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Header } from '@/components/layout'
 import { JobDetail } from '@/components/jobs/job-detail'
 
@@ -12,9 +11,10 @@ export default async function JobPage({ params }: JobPageProps) {
   return (
     <div>
       <Header />
-      <main>
-        <Link href="/jobs">Back to Jobs</Link>
-        <JobDetail jobId={id} />
+      <main className="max-w-[1200px] mx-auto px-8 py-10 pb-20">
+        <div className="animate-in">
+          <JobDetail jobId={id} />
+        </div>
       </main>
     </div>
   )

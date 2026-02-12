@@ -80,12 +80,47 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
                 ExpiresIn=604800
             )
 
+            # Thumbnail extraction
+            thumb_filename = f"thumb_{output_filename.replace('.mp4', '.jpg')}"
+            local_thumb = f"/tmp/{thumb_filename}"
+            thumb_r2_key = f"clips/{job_id}/{thumb_filename}"
+            thumbnail_url = None
+            thumb_r2_path = None
+
+            try:
+                midpoint = duration / 2
+                (
+                    ffmpeg
+                    .input(local_output, ss=midpoint)
+                    .output(local_thumb, vframes=1, **{'q:v': '2'}, loglevel="error")
+                    .overwrite_output()
+                    .run()
+                )
+                s3_client.upload_file(
+                    local_thumb, R2_BUCKET_NAME, thumb_r2_key,
+                    ExtraArgs={'ContentType': 'image/jpeg'}
+                )
+                thumbnail_url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': R2_BUCKET_NAME, 'Key': thumb_r2_key},
+                    ExpiresIn=604800
+                )
+                thumb_r2_path = thumb_r2_key
+                logger.info(f"Thumbnail generated for segment {i + 1}")
+            except Exception as thumb_err:
+                logger.warning(f"Thumbnail generation failed for segment {i + 1}: {thumb_err}")
+            finally:
+                if os.path.exists(local_thumb):
+                    os.remove(local_thumb)
+
             clips_metadata.append({
                 "job_id": job_id,
                 "r2_path": r2_dest_key,
                 "public_url": public_url,
                 "start_time": start_time,
-                "end_time": end_time
+                "end_time": end_time,
+                "thumbnail_r2_path": thumb_r2_path,
+                "thumbnail_url": thumbnail_url,
             })
 
             # Cleanup local

@@ -82,6 +82,7 @@ def run_simulation():
     print("\n[3] Simulating 'Job Creation'...")
     job_data = {
         "video_id": video_id,
+        "user_id": TEST_USER_ID,
         "query": DEFAULT_QUERY,
         "padding": DEFAULT_PADDING,
         "status": "pending"
@@ -155,6 +156,7 @@ def run_job_retry(video_id: str, query: str, padding: float = DEFAULT_PADDING,
     print("\n[2] Creating job...")
     job_data = {
         "video_id": video_id,
+        "user_id": TEST_USER_ID,
         "query": query,
         "padding": padding,
         "status": "pending"

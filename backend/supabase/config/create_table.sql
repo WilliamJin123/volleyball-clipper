@@ -22,6 +22,7 @@ create table videos (
 -- 3. JOBS (A request to slice a video)
 create table jobs (
   id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
   video_id uuid references videos(id) on delete cascade not null,
   query text not null,             -- e.g. "me setting the ball"
   padding float default 2.0,       -- seconds
@@ -37,5 +38,7 @@ create table clips (
   public_url text not null,        -- The watchable link
   start_time float,
   end_time float,
+  thumbnail_r2_path text,          -- e.g. "clips/job_id/thumb_clip_xxx.jpg"
+  thumbnail_url text,              -- Presigned URL for thumbnail image
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
