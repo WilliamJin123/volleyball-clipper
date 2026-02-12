@@ -17,7 +17,7 @@ export function Header() {
 
   return (
     <header>
-      <Link href="/">Volleyball Clipper</Link>
+      <Link href="/">VolleyClip</Link>
       {user && (
         <nav>
           {navItems.map((item) => {

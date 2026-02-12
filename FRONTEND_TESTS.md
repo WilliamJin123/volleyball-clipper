@@ -1,6 +1,6 @@
 # Frontend Testing Plan
 
-This document outlines a comprehensive testing strategy for the Volleyball Clipper frontend, progressing from simple unit tests to complex integration and end-to-end tests.
+This document outlines a comprehensive testing strategy for the VolleyClip frontend, progressing from simple unit tests to complex integration and end-to-end tests.
 
 ## Table of Contents
 
@@ -701,7 +701,7 @@ const TEST_API_URL = process.env.TEST_API_URL || 'http://localhost:8080'
 export const testSupabase = createClient(TEST_SUPABASE_URL, TEST_SUPABASE_KEY)
 
 export const TEST_USER = {
-  email: 'test@volleyballclipper.test',
+  email: 'test@volleyclip.test',
   password: 'test-password-123',
 }
 

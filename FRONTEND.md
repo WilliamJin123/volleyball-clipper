@@ -1,6 +1,6 @@
 # Frontend Implementation Report
 
-This document details the implementation of the Volleyball Clipper frontend, including architectural decisions, design choices, and alternatives considered.
+This document details the implementation of the VolleyClip frontend, including architectural decisions, design choices, and alternatives considered.
 
 ## Table of Contents
 
@@ -510,7 +510,7 @@ frontend/
 
 ## Conclusion
 
-The frontend implementation provides a complete user interface for the Volleyball Clipper application. Key design decisions prioritized:
+The frontend implementation provides a complete user interface for the VolleyClip application. Key design decisions prioritized:
 
 1. **Simplicity**: Custom hooks and components over external libraries
 2. **Performance**: Server components, direct R2 uploads, minimal JavaScript

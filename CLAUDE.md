@@ -1,4 +1,4 @@
-# Volleyball Clipper - Project Context
+# VolleyClip - Project Context
 
 ## Completed Tasks
 - [x] Video indexing workflow (TwelveLabs integration)

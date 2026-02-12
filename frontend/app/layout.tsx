@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/context/auth-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Volleyball Clipper",
+  title: "VolleyClip",
   description: "AI-powered volleyball video analysis and clip generation",
 };
 

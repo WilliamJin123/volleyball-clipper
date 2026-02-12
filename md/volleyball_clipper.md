@@ -1,4 +1,4 @@
-# Project Context: Volleyball AI Video Clipper
+# Project Context: VolleyClip — AI Video Clipper
 
 ## 1. Project Overview
 **Goal:** Build a SaaS that allows users to upload raw volleyball game footage, use AI to find specific actions (e.g., "me setting the ball"), and automatically generate downloadable video clips of those actions with user-defined padding.

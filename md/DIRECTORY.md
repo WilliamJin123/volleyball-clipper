@@ -1,4 +1,4 @@
-volleyball-clipper/
+volleyclip/
 ├── frontend/                  # Next.js App (UI, Auth, DB logic, Payments)
 │   ├── app/                   # App Router pages
 │   ├── components/            # UI Components (Buttons, Forms)

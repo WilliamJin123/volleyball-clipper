@@ -1,4 +1,4 @@
-# Volleyball Clipper — Design System
+# VolleyClip — Design System
 
 ## Direction
 

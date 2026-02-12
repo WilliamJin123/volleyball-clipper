@@ -21,7 +21,7 @@ class JobRequest(BaseModel):
 
 @app.get("/")
 def health_check():
-    return {"status": "Volleyball Clipper API is running"}
+    return {"status": "VolleyClip API is running"}
 
 @app.post("/webhook/index")
 def trigger_indexing(payload: IndexRequest, background_tasks: BackgroundTasks):

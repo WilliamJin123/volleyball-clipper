@@ -246,7 +246,7 @@ def run_job_retry(video_id: str, query: str, padding: float = DEFAULT_PADDING,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Volleyball Clipper Integration Test",
+        description="VolleyClip Integration Test",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
