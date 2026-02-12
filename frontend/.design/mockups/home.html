@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volleyball Clipper — Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── DESIGN TOKENS ─────────────────────────────────── */
+    :root {
+      --bg-void: #06060A;
+      --bg-surface: #0F0F14;
+      --bg-raised: #16161D;
+      --border-dim: #1E1E28;
+      --border-bright: #2A2A3A;
+      --text-primary: #E8E8ED;
+      --text-secondary: #7A7A8A;
+      --text-dim: #4A4A58;
+      --accent-primary: #FF5A1F;
+      --accent-primary-glow: rgba(255, 90, 31, 0.15);
+      --accent-secondary: #3B82F6;
+      --accent-hot: #E040FB;
+      --accent-success: #22D37A;
+      --accent-warning: #F59E0B;
+      --accent-error: #EF4444;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-snap: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    /* ── RESET ──────────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(15, 15, 20, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .logo-slash {
+      color: var(--accent-primary);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-item {
+      position: relative;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 2px;
+      transition: color 0.2s var(--ease-snap), background 0.2s var(--ease-snap);
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: var(--text-primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 12px;
+      right: 12px;
+      height: 2px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary-glow);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 2px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    /* ── ASCII BACKGROUND ──────────────────────────────── */
+    .ascii-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .ascii-bg-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      opacity: 0.3;
+    }
+
+    /* ── MAIN CONTENT ──────────────────────────────────── */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    /* ── GLASS PANEL ───────────────────────────────────── */
+    .glass-panel {
+      background: rgba(15, 15, 20, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* ── HERO SECTION ──────────────────────────────────── */
+    .hero {
+      padding: 56px 0 48px;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 2.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+
+    .hero-title .logo-slash {
+      color: var(--accent-primary);
+    }
+
+    .hero-subtitle {
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* ── BUTTONS ────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 10px 24px;
+      border-radius: 2px;
+      transition: all 0.2s var(--ease-snap);
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-primary-glow), 0 0 40px rgba(255, 90, 31, 0.08);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 28px rgba(255, 90, 31, 0.25), 0 0 56px rgba(255, 90, 31, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-secondary);
+      border: 1px solid var(--accent-secondary);
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.08);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(59, 130, 246, 0.06);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.14);
+      transform: translateY(-1px);
+    }
+
+    /* ── STATS STRIP ───────────────────────────────────── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 20px;
+      transition: border-color 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-snap);
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-bright);
+    }
+
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .stat-value.color-success { color: var(--accent-success); }
+    .stat-value.color-primary { color: var(--accent-primary); }
+    .stat-value.color-secondary { color: var(--accent-secondary); }
+    .stat-value.color-dim { color: var(--text-secondary); }
+
+    .stat-card:hover .stat-value.color-success {
+      text-shadow: 0 0 20px rgba(34, 211, 122, 0.2);
+    }
+    .stat-card:hover .stat-value.color-primary {
+      text-shadow: 0 0 20px var(--accent-primary-glow);
+    }
+    .stat-card:hover .stat-value.color-secondary {
+      text-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    /* ── NET DIVIDER ───────────────────────────────────── */
+    .net-divider {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--border-bright);
+      text-align: center;
+      margin: 40px 0;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
+      letter-spacing: 0;
+    }
+
+    .net-divider .net-char {
+      display: inline-block;
+      transition: color 0.15s, transform 0.3s var(--ease-slam);
+    }
+
+    .net-divider .net-char.ripple {
+      color: var(--accent-primary);
+      transform: translateY(-3px);
+    }
+
+    /* ── SECTION HEADER ────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: -0.01em;
+    }
+
+    .section-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent-secondary);
+      transition: color 0.15s var(--ease-snap);
+    }
+
+    .section-link:hover {
+      color: #60A5FA;
+    }
+
+    /* ── CLIP CARDS ────────────────────────────────────── */
+    .clips-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .clip-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      overflow: hidden;
+      transition: border-color 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-snap), transform 0.25s var(--ease-slam);
+    }
+
+    .clip-card:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .clip-thumb {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clip-thumb-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    .clip-duration {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: rgba(6, 6, 10, 0.8);
+      padding: 2px 6px;
+      border-radius: 2px;
+      letter-spacing: 0.02em;
+    }
+
+    .clip-mini-net {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--border-bright);
+      padding: 0 12px;
+      user-select: none;
+      line-height: 1.6;
+      opacity: 0.6;
+    }
+
+    .clip-info {
+      padding: 10px 12px 14px;
+    }
+
+    .clip-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9375rem;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .clip-timestamp {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    /* ── JOB ROWS ──────────────────────────────────────── */
+    .jobs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .job-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 14px 18px;
+      transition: border-color 0.2s var(--ease-snap);
+    }
+
+    .job-row:hover {
+      border-color: var(--border-bright);
+    }
+
+    .job-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .job-name {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-query {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── FUSED BAR ─────────────────────────────────────── */
+    .fused-bar {
+      display: flex;
+      align-items: stretch;
+      height: 32px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      overflow: hidden;
+      min-width: 200px;
+    }
+
+    .fused-bar-tag {
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      border-right: 1px solid var(--border-dim);
+    }
+
+    .fused-bar-tag.tag-slicing {
+      color: var(--accent-primary);
+    }
+
+    .fused-bar-tag.tag-indexing {
+      color: var(--accent-secondary);
+    }
+
+    .fused-bar-tag.tag-complete {
+      color: var(--accent-success);
+    }
+
+    .fused-bar-fill {
+      flex: 1;
+      position: relative;
+    }
+
+    .fused-bar-fill.fill-slicing {
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 8px,
+        rgba(255, 90, 31, 0.04) 8px,
+        rgba(255, 90, 31, 0.04) 16px
+      );
+    }
+
+    .fused-bar-fill.fill-slicing::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255, 90, 31, 0.06) 0%, rgba(255, 90, 31, 0.02) 100%);
+    }
+
+    .fused-bar-fill.fill-indexing {
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 8px,
+        rgba(59, 130, 246, 0.04) 8px,
+        rgba(59, 130, 246, 0.04) 16px
+      );
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Skeleton stripes animation for indexing */
+    .fused-bar-fill.fill-indexing::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -200%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(59, 130, 246, 0.06) 25%,
+        rgba(59, 130, 246, 0.12) 50%,
+        rgba(59, 130, 246, 0.06) 75%,
+        transparent 100%
+      );
+      animation: skeleton-sweep 2s infinite linear;
+    }
+
+    @keyframes skeleton-sweep {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(50%); }
+    }
+
+    .fused-bar-fill.fill-complete {
+      background: linear-gradient(90deg, rgba(34, 211, 122, 0.04) 0%, rgba(34, 211, 122, 0.01) 100%);
+    }
+
+    .job-time {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      text-align: right;
+      min-width: 72px;
+    }
+
+    /* ── ENTRANCE ANIMATIONS ───────────────────────────── */
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fade-up 0.6s var(--ease-slam) both;
+    }
+
+    .animate-in:nth-child(1) { animation-delay: 0ms; }
+    .animate-in:nth-child(2) { animation-delay: 60ms; }
+    .animate-in:nth-child(3) { animation-delay: 120ms; }
+    .animate-in:nth-child(4) { animation-delay: 180ms; }
+
+    .delay-1 { animation-delay: 100ms !important; }
+    .delay-2 { animation-delay: 200ms !important; }
+    .delay-3 { animation-delay: 300ms !important; }
+    .delay-4 { animation-delay: 400ms !important; }
+    .delay-5 { animation-delay: 500ms !important; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .stats-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .clips-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .hero-title {
+        font-size: 1.75rem;
+      }
+      .fused-bar {
+        min-width: 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ASCII DITHERED BACKGROUND -->
+  <div class="ascii-bg">
+    <div class="ascii-bg-text">[ ASCII DITHERED BACKGROUND — VOLLEYBALL MONTAGE ]</div>
+  </div>
+
+  <!-- ── HEADER ──────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-slash">//</span> VOLLEYBALL CLIPPER
+      </div>
+      <nav class="nav">
+        <a href="#" class="nav-item active">Home</a>
+        <a href="#" class="nav-item">Clips</a>
+        <a href="#" class="nav-item">Jobs</a>
+        <a href="#" class="nav-item">Videos</a>
+        <a href="#" class="nav-item">Settings</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <div class="avatar">JW</div>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────── -->
+  <main class="main glass-panel" style="background: transparent; backdrop-filter: none;">
+
+    <!-- HERO -->
+    <section class="hero animate-in">
+      <div class="glass-panel" style="border-radius: 2px; padding: 56px 24px;">
+        <h1 class="hero-title">
+          <span class="logo-slash">//</span> VOLLEYBALL CLIPPER
+        </h1>
+        <p class="hero-subtitle">AI-powered volleyball clip extraction</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary">Upload Video</button>
+          <button class="btn btn-secondary">Create Job</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS STRIP -->
+    <section class="stats-strip animate-in delay-1" style="margin-top: 32px;">
+      <div class="stat-card">
+        <div class="stat-label">Total Clips</div>
+        <div class="stat-value color-success">47</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Jobs</div>
+        <div class="stat-value color-primary">2</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Videos Indexed</div>
+        <div class="stat-value color-secondary">8</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Storage</div>
+        <div class="stat-value color-dim">2.4 GB</div>
+      </div>
+    </section>
+
+    <!-- NET DIVIDER -->
+    <div class="net-divider animate-in delay-2">&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;</div>
+
+    <!-- RECENT CLIPS -->
+    <section class="animate-in delay-3">
+      <div class="section-header">
+        <h2 class="section-title">Recent Clips</h2>
+        <a href="#" class="section-link">View all clips &rarr;</a>
+      </div>
+      <div class="clips-grid">
+
+        <!-- Clip 1 -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-label">16:9</span>
+            <span class="clip-duration">0:12</span>
+          </div>
+          <div class="clip-mini-net">&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;</div>
+          <div class="clip-info">
+            <div class="clip-title">Match-winning spike</div>
+            <div class="clip-timestamp">2026-02-10 18:42:07</div>
+          </div>
+        </div>
+
+        <!-- Clip 2 -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-label">16:9</span>
+            <span class="clip-duration">0:08</span>
+          </div>
+          <div class="clip-mini-net">&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;</div>
+          <div class="clip-info">
+            <div class="clip-title">Back-row quick attack</div>
+            <div class="clip-timestamp">2026-02-10 18:39:51</div>
+          </div>
+        </div>
+
+        <!-- Clip 3 -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-label">16:9</span>
+            <span class="clip-duration">0:15</span>
+          </div>
+          <div class="clip-mini-net">&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;</div>
+          <div class="clip-info">
+            <div class="clip-title">Pancake dig rally</div>
+            <div class="clip-timestamp">2026-02-10 18:35:22</div>
+          </div>
+        </div>
+
+        <!-- Clip 4 -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-label">16:9</span>
+            <span class="clip-duration">0:06</span>
+          </div>
+          <div class="clip-mini-net">&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;</div>
+          <div class="clip-info">
+            <div class="clip-title">Jump serve ace</div>
+            <div class="clip-timestamp">2026-02-10 18:31:09</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- NET DIVIDER -->
+    <div class="net-divider animate-in delay-4">&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;</div>
+
+    <!-- ACTIVE JOBS -->
+    <section class="animate-in delay-5">
+      <div class="section-header">
+        <h2 class="section-title">Active Jobs</h2>
+        <a href="#" class="section-link">View all jobs &rarr;</a>
+      </div>
+      <div class="jobs-list">
+
+        <!-- Job 1 — SLICING -->
+        <div class="job-row">
+          <div class="job-meta">
+            <div class="job-name">Semi-final highlights</div>
+            <div class="job-query">query: "spikes and blocks near the net"</div>
+          </div>
+          <div class="fused-bar">
+            <div class="fused-bar-tag tag-slicing">[SLICING]</div>
+            <div class="fused-bar-fill fill-slicing"></div>
+          </div>
+          <div class="job-time">3m 22s</div>
+        </div>
+
+        <!-- Job 2 — INDEXING -->
+        <div class="job-row">
+          <div class="job-meta">
+            <div class="job-name">Practice session #14</div>
+            <div class="job-query">query: "serves and serve receives"</div>
+          </div>
+          <div class="fused-bar">
+            <div class="fused-bar-tag tag-indexing">[INDEXING]</div>
+            <div class="fused-bar-fill fill-indexing"></div>
+          </div>
+          <div class="job-time">8m 45s</div>
+        </div>
+
+        <!-- Job 3 — COMPLETE -->
+        <div class="job-row">
+          <div class="job-meta">
+            <div class="job-name">Tournament game 3</div>
+            <div class="job-query">query: "rallies longer than 5 touches"</div>
+          </div>
+          <div class="fused-bar">
+            <div class="fused-bar-tag tag-complete">[COMPLETE]</div>
+            <div class="fused-bar-fill fill-complete"></div>
+          </div>
+          <div class="job-time">12 clips</div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+<script>
+  // ── Animated Net Divider Wave ──
+  function netRipple(el) {
+    if (el.dataset.rippling === 'true') return;
+    el.dataset.rippling = 'true';
+    const chars = el.querySelectorAll('.net-char');
+    const centerIdx = Math.floor(chars.length / 2);
+    chars.forEach((ch, i) => {
+      const dist = Math.abs(i - centerIdx);
+      setTimeout(() => {
+        ch.classList.add('ripple');
+        setTimeout(() => ch.classList.remove('ripple'), 300);
+      }, dist * 25);
+    });
+    setTimeout(() => { el.dataset.rippling = 'false'; }, 800);
+  }
+
+  const visibleNets = new Set();
+  const netObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) visibleNets.add(entry.target);
+      else visibleNets.delete(entry.target);
+    });
+  }, { threshold: 0.8 });
+
+  document.querySelectorAll('.net-divider').forEach(net => {
+    const text = net.textContent;
+    net.innerHTML = text.split('').map((c, i) =>
+      `<span class="net-char" data-idx="${i}">${c}</span>`
+    ).join('');
+    netObserver.observe(net);
+  });
+
+  (function ambientRipple() {
+    setTimeout(() => {
+      if (visibleNets.size > 0) {
+        const arr = Array.from(visibleNets);
+        netRipple(arr[Math.floor(Math.random() * arr.length)]);
+      }
+      ambientRipple();
+    }, 5000 + Math.random() * 5000);
+  })();
+</script>
+
+</body>
+</html>

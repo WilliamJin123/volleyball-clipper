@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volleyball Clipper — Jobs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #06060A;
+      --bg-surface: #0F0F14;
+      --bg-raised: #16161D;
+      --border-dim: #1E1E28;
+      --border-bright: #2A2A3A;
+      --text-primary: #E8E8ED;
+      --text-secondary: #7A7A8A;
+      --text-dim: #4A4A58;
+      --accent-primary: #FF5A1F;
+      --accent-primary-glow: rgba(255, 90, 31, 0.15);
+      --accent-secondary: #3B82F6;
+      --accent-secondary-glow: rgba(59, 130, 246, 0.12);
+      --accent-hot: #E040FB;
+      --accent-success: #22D37A;
+      --accent-warning: #F59E0B;
+      --accent-error: #EF4444;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-snap: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: rgba(6, 6, 10, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-mark {
+      width: 20px;
+      height: 20px;
+      background: var(--accent-primary);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    .nav {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 2px;
+      transition: color 0.15s var(--ease-snap), background 0.15s var(--ease-snap);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-link:hover {
+      color: var(--text-secondary);
+      background: var(--bg-raised);
+    }
+
+    .nav-link.active {
+      color: var(--accent-primary);
+      background: rgba(255, 90, 31, 0.06);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 2px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 0.15s var(--ease-snap);
+    }
+
+    .avatar:hover {
+      border-color: var(--border-bright);
+    }
+
+    /* ── ASCII Background ── */
+    .ascii-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .ascii-bg-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      opacity: 0.3;
+    }
+
+    /* ── Main ── */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 10px 24px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: box-shadow 0.15s var(--ease-snap), border-color 0.15s var(--ease-snap), background 0s;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 24px var(--accent-primary-glow), 0 0 48px rgba(255, 90, 31, 0.08);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border-dim);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    .btn-sm {
+      font-size: 0.75rem;
+      padding: 6px 14px;
+    }
+
+    /* ── Filter Tabs ── */
+    .filter-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+    }
+
+    .filter-tab {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      padding: 8px 16px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      position: relative;
+      letter-spacing: 0.03em;
+      transition: color 0.15s var(--ease-snap);
+    }
+
+    .filter-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .filter-tab.active {
+      color: var(--accent-primary);
+    }
+
+    .filter-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 16px;
+      right: 16px;
+      height: 1px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary-glow);
+    }
+
+    /* ── Net Divider ── */
+    .net-divider {
+      color: var(--border-dim);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-align: center;
+      margin: 24px 0;
+      user-select: none;
+      letter-spacing: 2px;
+    }
+
+    /* ── Job List ── */
+    .job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .job-row {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 320px 80px 100px;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.15s var(--ease-snap), box-shadow 0.15s var(--ease-snap);
+      cursor: pointer;
+    }
+
+    .job-row:hover {
+      border-color: var(--border-bright);
+    }
+
+    .job-row.job-error {
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .job-row.job-error:hover {
+      border-color: rgba(239, 68, 68, 0.35);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.06);
+    }
+
+    .job-row.job-complete:hover {
+      box-shadow: 0 0 16px rgba(34, 211, 122, 0.04);
+    }
+
+    .job-row.job-active:hover {
+      box-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    /* ── Job Info ── */
+    .job-info {
+      min-width: 0;
+    }
+
+    .job-name {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-query {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Fused Bar ── */
+    .fused-bar {
+      height: 32px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      border: 1px solid var(--border-dim);
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      position: relative;
+    }
+
+    .fused-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 6px,
+        rgba(255, 90, 31, 0.06) 6px,
+        rgba(255, 90, 31, 0.06) 12px
+      );
+      background-size: 24px 24px;
+      animation: upload-stripe 3s linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes upload-stripe {
+      0% { background-position: 0 0; }
+      100% { background-position: 24px 0; }
+    }
+
+    .fused-bar.resolved::before {
+      opacity: 0;
+      transition: opacity 0.6s var(--ease-slam);
+    }
+
+    .fused-bar.resolved {
+      border-color: rgba(34, 211, 122, 0.15);
+    }
+
+    .fused-bar.error-state {
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .fused-bar.error-state::before {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 6px,
+        rgba(239, 68, 68, 0.06) 6px,
+        rgba(239, 68, 68, 0.06) 12px
+      );
+      background-size: 24px 24px;
+    }
+
+    .fused-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      padding: 0 8px;
+      border-right: 1px solid var(--border-dim);
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .fused-tag.tag-complete {
+      color: var(--accent-success);
+    }
+
+    .fused-tag.tag-slicing {
+      color: var(--accent-primary);
+    }
+
+    .fused-tag.tag-indexing {
+      color: var(--accent-secondary);
+    }
+
+    .fused-tag.tag-queued {
+      color: var(--text-dim);
+    }
+
+    .fused-tag.tag-error {
+      color: var(--accent-error);
+    }
+
+    .fused-data {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .fused-data.data-complete {
+      color: var(--accent-success);
+    }
+
+    .fused-data.data-active {
+      color: var(--accent-primary);
+    }
+
+    .fused-data.data-skeleton {
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.1em;
+      font-size: 0.625rem;
+    }
+
+    .fused-data.data-error {
+      color: var(--accent-error);
+    }
+
+    .fused-data-resolved {
+      color: var(--accent-primary);
+    }
+
+    .fused-data-noise {
+      color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    .fused-bar.resolved-cascade .fused-data-resolved {
+      color: var(--accent-success);
+    }
+
+    /* ── Clips Column ── */
+    .job-clips {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .job-clips.no-data {
+      color: var(--text-dim);
+    }
+
+    /* ── Time Column ── */
+    .job-time {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-align: right;
+    }
+
+    /* ── Slicing animation ── */
+    @keyframes decode-flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .decode-noise {
+      animation: decode-flicker 0.8s ease-in-out infinite;
+    }
+
+    /* ── Skeleton pulse ── */
+    @keyframes skeleton-pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .pulse-text {
+      animation: skeleton-pulse 2s ease-in-out infinite;
+    }
+
+    /* ── Cascade Settle (Phase 2→3) ── */
+    .cascade-char {
+      display: inline-block;
+      transition: none;
+    }
+
+    .cascade-char.pulse {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(34, 211, 122, 0.7);
+    }
+
+    .cascade-char.settled {
+      color: var(--accent-success);
+      text-shadow: none;
+      transition: text-shadow 0.2s ease-out;
+    }
+
+    /* ── Animated Net Divider ── */
+    .net-divider .net-char {
+      display: inline-block;
+      transition: color 0.15s, transform 0.3s var(--ease-slam);
+    }
+
+    .net-divider .net-char.ripple {
+      color: var(--accent-primary);
+      transform: translateY(-3px);
+    }
+
+    /* ── New Job Form ── */
+    .form-section {
+      margin-top: 8px;
+    }
+
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .form-title {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .form-toggle {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      transition: color 0.15s;
+    }
+
+    .form-header:hover .form-toggle {
+      color: var(--text-secondary);
+    }
+
+    .form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: var(--bg-void);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s var(--ease-snap), box-shadow 0.15s var(--ease-snap);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%234A4A58' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+      cursor: pointer;
+    }
+
+    .form-select option {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-input-sm {
+      width: 100%;
+      background: var(--bg-void);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s var(--ease-snap), box-shadow 0.15s var(--ease-snap);
+    }
+
+    .form-input-sm:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    .form-input-sm::placeholder {
+      color: var(--text-dim);
+    }
+
+    .form-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* ── Column Headers ── */
+    .job-list-header {
+      display: grid;
+      grid-template-columns: 1fr 320px 80px 100px;
+      align-items: center;
+      gap: 16px;
+      padding: 0 20px 8px;
+    }
+
+    .col-header {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .col-header.center {
+      text-align: center;
+    }
+
+    .col-header.right {
+      text-align: right;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-void);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-dim);
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-bright);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ASCII Background -->
+  <div class="ascii-bg">
+    <div class="ascii-bg-text">[ ASCII DITHERED BACKGROUND — VOLLEYBALL MONTAGE ]</div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="#" class="logo">
+          <div class="logo-mark">VC</div>
+          <span>Volleyball Clipper</span>
+        </a>
+        <nav class="nav">
+          <a href="#" class="nav-link">Dashboard</a>
+          <a href="#" class="nav-link">Videos</a>
+          <a href="#" class="nav-link active">Jobs</a>
+          <a href="#" class="nav-link">Clips</a>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="avatar">JW</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Jobs</h1>
+      <a href="#new-job" class="btn btn-primary btn-sm">+ New Job</a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active">All</button>
+      <button class="filter-tab">Active</button>
+      <button class="filter-tab">Complete</button>
+      <button class="filter-tab">Failed</button>
+    </div>
+
+    <!-- Net Divider -->
+    <div class="net-divider">&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;</div>
+
+    <!-- Column Headers -->
+    <div class="job-list-header">
+      <span class="col-header">Job</span>
+      <span class="col-header">Status</span>
+      <span class="col-header center">Clips</span>
+      <span class="col-header right">Time</span>
+    </div>
+
+    <!-- Job List -->
+    <div class="job-list">
+
+      <!-- Job 1: COMPLETE -->
+      <div class="job-row job-complete">
+        <div class="job-info">
+          <div class="job-name">Match Highlights</div>
+          <div class="job-query">"kills and blocks"</div>
+        </div>
+        <div class="fused-bar resolved">
+          <div class="fused-tag tag-complete">[COMPLETE]</div>
+          <div class="fused-data data-complete">CLIPS:12&middot;RES:1080p&middot;47.2MB</div>
+        </div>
+        <div class="job-clips">12</div>
+        <div class="job-time">2h ago</div>
+      </div>
+
+      <!-- Job 2: SLICING (live decode + cascade animation) -->
+      <div class="job-row job-active">
+        <div class="job-info">
+          <div class="job-name">Serve Analysis</div>
+          <div class="job-query">"all serves in set 2"</div>
+        </div>
+        <div class="fused-bar" id="demo-fused">
+          <div class="fused-tag tag-slicing" id="demo-tag">[SLICING]</div>
+          <div class="fused-data data-active" id="demo-data"><span class="fused-data-resolved" id="demo-resolved"></span><span class="fused-data-noise" id="demo-noise"></span></div>
+        </div>
+        <div class="job-clips no-data">&mdash;</div>
+        <div class="job-time">5m ago</div>
+      </div>
+
+      <!-- Job 3: INDEXING -->
+      <div class="job-row">
+        <div class="job-info">
+          <div class="job-name">Block Party</div>
+          <div class="job-query">"blocks and stuff blocks"</div>
+        </div>
+        <div class="fused-bar">
+          <div class="fused-tag tag-indexing">[INDEXING]</div>
+          <div class="fused-data data-skeleton"><span class="pulse-text">ANALYZING...</span></div>
+        </div>
+        <div class="job-clips no-data">&mdash;</div>
+        <div class="job-time">12m ago</div>
+      </div>
+
+      <!-- Job 4: QUEUED -->
+      <div class="job-row">
+        <div class="job-info">
+          <div class="job-name">Defensive Plays</div>
+          <div class="job-query">"digs and receives"</div>
+        </div>
+        <div class="fused-bar">
+          <div class="fused-tag tag-queued">[QUEUED]</div>
+          <div class="fused-data data-skeleton"><span class="pulse-text">AWAITING DATA...</span></div>
+        </div>
+        <div class="job-clips no-data">&mdash;</div>
+        <div class="job-time">20m ago</div>
+      </div>
+
+      <!-- Job 5: COMPLETE (older) -->
+      <div class="job-row job-complete">
+        <div class="job-info">
+          <div class="job-name">Quick Sets</div>
+          <div class="job-query">"setter dumps and quick attacks"</div>
+        </div>
+        <div class="fused-bar resolved">
+          <div class="fused-tag tag-complete">[COMPLETE]</div>
+          <div class="fused-data data-complete">CLIPS:8&middot;RES:720p&middot;23.1MB</div>
+        </div>
+        <div class="job-clips">8</div>
+        <div class="job-time">yesterday</div>
+      </div>
+
+      <!-- Job 6: ERROR -->
+      <div class="job-row job-error">
+        <div class="job-info">
+          <div class="job-name">Failed Upload</div>
+          <div class="job-query">"everything from set 3"</div>
+        </div>
+        <div class="fused-bar error-state">
+          <div class="fused-tag tag-error">[ERROR]</div>
+          <div class="fused-data data-error">ERR:TIMEOUT&middot;RETRY?</div>
+        </div>
+        <div class="job-clips no-data">&mdash;</div>
+        <div class="job-time">1h ago</div>
+      </div>
+
+    </div>
+
+    <!-- Net Divider -->
+    <div class="net-divider">&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;</div>
+
+    <!-- New Job Form -->
+    <div class="form-section" id="new-job">
+      <div class="form-header">
+        <h2 class="form-title">Create New Job</h2>
+        <span class="form-toggle">[EXPAND]</span>
+      </div>
+      <div class="form-card">
+        <div class="form-group">
+          <label class="form-label">Video</label>
+          <select class="form-select">
+            <option value="" disabled>Select a video...</option>
+            <option value="1">match_finals_2025.mp4</option>
+            <option value="2" selected>practice_session_jan.mp4</option>
+            <option value="3">tournament_pool_play.mp4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Query</label>
+          <textarea class="form-textarea" placeholder="Describe the moments to find..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Padding</label>
+            <input type="text" class="form-input-sm" value="1.5s" placeholder="1.5s">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min Confidence</label>
+            <input type="text" class="form-input-sm" value="0.60" placeholder="0.60">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost btn-sm">Cancel</button>
+          <button class="btn btn-primary btn-sm">Start Job</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+<script>
+  // ── Decode Animation (Phase 2→3) for SLICING row ──
+  const noiseChars = '▓░▒█▌▐╬╫╪┼┤├─│┘└┐┌?#@$&*!><}{][';
+  const DECODE_LEN = 30;
+  const decodeFinal = 'FRM:1847/12402·DUR:04.32s·7/14';
+  let decodePos = 0;
+  let decoding = true;
+  let cascading = false;
+
+  function decodeRender() {
+    const resolved = document.getElementById('demo-resolved');
+    const noise = document.getElementById('demo-noise');
+    if (!resolved || !noise) return;
+    resolved.textContent = decodeFinal.substring(0, decodePos);
+    let n = '';
+    for (let i = decodePos; i < DECODE_LEN; i++) {
+      n += noiseChars[Math.floor(Math.random() * noiseChars.length)];
+    }
+    noise.textContent = n;
+  }
+
+  // Flicker noise
+  setInterval(() => { if (decoding && !cascading) decodeRender(); }, 80);
+
+  // Advance decode position
+  const decodeInterval = setInterval(() => {
+    if (!decoding || cascading) return;
+    decodePos += 1;
+    if (decodePos >= DECODE_LEN) {
+      decodePos = DECODE_LEN;
+      decoding = false;
+      clearInterval(decodeInterval);
+      // Start cascade settle (Phase 2→3)
+      setTimeout(cascadeSettle, 300);
+    }
+    decodeRender();
+  }, 120);
+
+  function cascadeSettle() {
+    cascading = true;
+    const el = document.getElementById('demo-fused');
+    const tag = document.getElementById('demo-tag');
+    const dataDiv = document.getElementById('demo-data');
+
+    const tagFinal = '[COMPLETE]';
+    const dataFinal = decodeFinal.substring(0, DECODE_LEN);
+
+    // Build tag as cascade chars
+    let tagHtml = '';
+    for (let i = 0; i < tagFinal.length; i++) {
+      const c = noiseChars[Math.floor(Math.random() * noiseChars.length)];
+      tagHtml += '<span class="cascade-char" style="color: var(--accent-primary);">' + c + '</span>';
+    }
+    tag.innerHTML = tagHtml;
+    tag.className = 'fused-tag';
+
+    // Build data as cascade chars
+    let dataHtml = '';
+    for (let i = 0; i < DECODE_LEN; i++) {
+      if (i < decodePos) {
+        dataHtml += '<span class="cascade-char" style="color: var(--accent-primary);">' + dataFinal[i] + '</span>';
+      } else {
+        const c = noiseChars[Math.floor(Math.random() * noiseChars.length)];
+        dataHtml += '<span class="cascade-char" style="color: var(--text-dim); opacity: 0.5;">' + c + '</span>';
+      }
+    }
+    dataDiv.innerHTML = dataHtml;
+
+    const tagSpans = Array.from(tag.querySelectorAll('.cascade-char'));
+    const dataSpans = Array.from(dataDiv.querySelectorAll('.cascade-char'));
+    const allSpans = tagSpans.concat(dataSpans);
+    const allFinal = tagFinal + dataFinal;
+
+    let idx = 0;
+    const cascadeInterval = setInterval(() => {
+      if (idx >= allSpans.length) {
+        clearInterval(cascadeInterval);
+        setTimeout(() => {
+          el.classList.add('resolved');
+          tag.style.borderRightColor = 'rgba(34, 211, 122, 0.2)';
+          allSpans.forEach(s => { s.className = 'cascade-char settled'; });
+          cascading = false;
+        }, 150);
+        return;
+      }
+      const span = allSpans[idx];
+      span.textContent = allFinal[idx];
+      span.style.color = '';
+      span.style.opacity = '';
+      span.className = 'cascade-char pulse';
+      setTimeout(() => { span.className = 'cascade-char settled'; }, 80);
+      idx++;
+    }, 20);
+  }
+
+  decodeRender();
+
+  // ── Animated Net Divider Wave ──
+  function netRipple(el) {
+    if (el.dataset.rippling === 'true') return;
+    el.dataset.rippling = 'true';
+    const chars = el.querySelectorAll('.net-char');
+    const centerIdx = Math.floor(chars.length / 2);
+    chars.forEach((ch, i) => {
+      const dist = Math.abs(i - centerIdx);
+      setTimeout(() => {
+        ch.classList.add('ripple');
+        setTimeout(() => ch.classList.remove('ripple'), 300);
+      }, dist * 25);
+    });
+    setTimeout(() => { el.dataset.rippling = 'false'; }, 800);
+  }
+
+  const visibleNets = new Set();
+  const netObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) visibleNets.add(entry.target);
+      else visibleNets.delete(entry.target);
+    });
+  }, { threshold: 0.8 });
+
+  document.querySelectorAll('.net-divider').forEach(net => {
+    const text = net.textContent;
+    net.innerHTML = text.split('').map((c, i) =>
+      `<span class="net-char" data-idx="${i}">${c}</span>`
+    ).join('');
+    netObserver.observe(net);
+  });
+
+  // Ambient periodic ripple
+  (function ambientRipple() {
+    setTimeout(() => {
+      if (visibleNets.size > 0) {
+        const arr = Array.from(visibleNets);
+        netRipple(arr[Math.floor(Math.random() * arr.length)]);
+      }
+      ambientRipple();
+    }, 5000 + Math.random() * 5000);
+  })();
+</script>
+
+</body>
+</html>

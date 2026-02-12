@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volleyball Clipper — Design Playground</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Core */
+      --bg-void: #06060A;
+      --bg-surface: #0F0F14;
+      --bg-raised: #16161D;
+      --border-dim: #1E1E28;
+      --border-bright: #2A2A3A;
+      --text-primary: #E8E8ED;
+      --text-secondary: #7A7A8A;
+      --text-dim: #4A4A58;
+
+      /* Accents */
+      --accent-primary: #FF5A1F;
+      --accent-primary-glow: rgba(255, 90, 31, 0.15);
+      --accent-secondary: #3B82F6;
+      --accent-secondary-glow: rgba(59, 130, 246, 0.12);
+      --accent-hot: #E040FB;
+      --accent-success: #22D37A;
+      --accent-warning: #F59E0B;
+      --accent-error: #EF4444;
+
+      /* Dither */
+      --dither-base: #12121A;
+      --dither-bright: #1E1E2E;
+
+      /* Typography */
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Motion */
+      --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-snap: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .playground {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 40px;
+    }
+
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 40px;
+    }
+
+    /* ── Net Divider ── */
+    .net-divider {
+      color: var(--border-dim);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-align: center;
+      margin: 60px 0;
+      user-select: none;
+      letter-spacing: 2px;
+    }
+
+    /* ── Color Swatches ── */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .swatch {
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 72px;
+      position: relative;
+    }
+
+    .swatch-color::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--border-dim);
+    }
+
+    .swatch-info {
+      padding: 10px 12px;
+      background: var(--bg-surface);
+    }
+
+    .swatch-name {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* ── Typography Showcase ── */
+    .type-sample {
+      margin-bottom: 32px;
+    }
+
+    .type-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .type-display-4xl {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .type-display-3xl {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .type-display-2xl {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .type-body {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+    }
+
+    .type-mono {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .type-mono .dim { color: var(--text-dim); }
+    .type-mono .bright { color: var(--text-primary); }
+
+    /* ── Buttons ── */
+    .button-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 10px 24px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: box-shadow 0.15s var(--ease-snap), border-color 0.15s var(--ease-snap), background 0s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 24px var(--accent-primary-glow), 0 0 48px rgba(255, 90, 31, 0.08);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-secondary);
+      border-color: var(--accent-secondary);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 0 24px var(--accent-secondary-glow);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border-dim);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--accent-error);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.12);
+      background: rgba(239, 68, 68, 0.06);
+    }
+
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* ── Status Badges ── */
+    .badge-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .badge-indexing {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent-secondary);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .badge-indexing .badge-dot { background: var(--accent-secondary); }
+
+    .badge-processing {
+      background: rgba(255, 90, 31, 0.1);
+      color: var(--accent-primary);
+      border: 1px solid rgba(255, 90, 31, 0.2);
+    }
+    .badge-processing .badge-dot {
+      background: var(--accent-primary);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    .badge-complete {
+      background: rgba(34, 211, 122, 0.1);
+      color: var(--accent-success);
+      border: 1px solid rgba(34, 211, 122, 0.2);
+    }
+    .badge-complete .badge-dot { background: var(--accent-success); }
+
+    .badge-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .badge-error .badge-dot { background: var(--accent-error); }
+
+    .badge-queued {
+      background: rgba(74, 74, 88, 0.15);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-dim);
+    }
+    .badge-queued .badge-dot { background: var(--text-dim); }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Clip Card ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .clip-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s var(--ease-snap), box-shadow 0.15s var(--ease-snap);
+    }
+
+    .clip-card:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 30px var(--accent-primary-glow);
+    }
+
+    .clip-card.processing {
+      border-color: rgba(255, 90, 31, 0.3);
+      animation: card-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes card-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 90, 31, 0.08); }
+      50% { box-shadow: 0 0 30px rgba(255, 90, 31, 0.18); }
+    }
+
+    .clip-thumb {
+      aspect-ratio: 16/9;
+      background: var(--bg-raised);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .clip-thumb-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .clip-duration {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-primary);
+      background: rgba(6, 6, 10, 0.85);
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+
+    .clip-net-divider {
+      height: 1px;
+      background: var(--border-dim);
+      position: relative;
+    }
+
+    .clip-net-divider::before {
+      content: '┼─────┼─────┼─────┼─────┼─────┼─────┼';
+      position: absolute;
+      top: -6px;
+      left: 0;
+      right: 0;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--border-dim);
+      letter-spacing: 0px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .clip-meta {
+      padding: 14px 16px;
+    }
+
+    .clip-title {
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .clip-details {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .clip-timestamp {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .clip-timestamp .bright {
+      color: var(--text-secondary);
+    }
+
+    /* ── Data Readouts ── */
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .readout {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 16px 20px;
+    }
+
+    .readout-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .readout-value {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .readout-value .dim { color: var(--text-dim); }
+    .readout-value .unit { color: var(--text-dim); font-size: 0.75rem; margin-left: 4px; }
+    .readout-value .accent { color: var(--accent-primary); }
+    .readout-value .success { color: var(--accent-success); }
+    .readout-value .blue { color: var(--accent-secondary); }
+
+    /* ── Processing Log ── */
+    .terminal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.8;
+      max-width: 700px;
+    }
+
+    .terminal-line { color: var(--text-dim); }
+    .terminal-line .op { color: var(--accent-secondary); }
+    .terminal-line .val { color: var(--text-secondary); }
+    .terminal-line .ok { color: var(--accent-success); }
+    .terminal-line .err { color: var(--accent-error); }
+    .terminal-line .warn { color: var(--accent-warning); }
+    .terminal-line .hot { color: var(--accent-hot); }
+    .terminal-line .primary { color: var(--accent-primary); }
+
+    /* ── Notifications (Broadcast Alerts) ── */
+    .toast-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 420px;
+    }
+
+    .toast {
+      background: rgba(15, 15, 20, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      animation: toast-enter 0.3s var(--ease-slam) both;
+    }
+
+    .toast:nth-child(2) { animation-delay: 0.12s; }
+    .toast:nth-child(3) { animation-delay: 0.24s; }
+    .toast:nth-child(4) { animation-delay: 0.36s; }
+
+    @keyframes toast-enter {
+      from { opacity: 0; transform: translateX(20px) scale(0.97); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    /* Thin accent top border + subtle glow per type */
+    .toast-success { border-top: 2px solid rgba(34, 211, 122, 0.4); box-shadow: 0 0 20px rgba(34, 211, 122, 0.05); }
+    .toast-error { border-top: 2px solid rgba(239, 68, 68, 0.4); box-shadow: 0 0 20px rgba(239, 68, 68, 0.05); }
+    .toast-info { border-top: 2px solid rgba(224, 64, 251, 0.4); box-shadow: 0 0 20px rgba(224, 64, 251, 0.05); }
+    .toast-warn { border-top: 2px solid rgba(245, 158, 11, 0.4); box-shadow: 0 0 20px rgba(245, 158, 11, 0.05); }
+
+    .toast:hover {
+      border-left-color: var(--border-bright);
+      border-right-color: var(--border-bright);
+      border-bottom-color: var(--border-bright);
+    }
+
+
+    .toast-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px 0;
+      gap: 10px;
+    }
+
+    .toast-tag {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .toast-success .toast-tag { background: rgba(34, 211, 122, 0.15); color: var(--accent-success); }
+    .toast-error .toast-tag { background: rgba(239, 68, 68, 0.15); color: var(--accent-error); }
+    .toast-info .toast-tag { background: rgba(224, 64, 251, 0.15); color: var(--accent-hot); }
+    .toast-warn .toast-tag { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+
+    .toast-headline {
+      font-family: var(--font-display);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .toast-time {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .toast-micro-net {
+      margin: 8px 14px 0;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: var(--border-dim);
+      letter-spacing: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .toast-body {
+      padding: 8px 14px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .toast-dim { color: var(--text-dim); }
+    .toast-action { color: var(--accent-secondary); cursor: pointer; }
+    .toast-action:hover { text-decoration: underline; }
+
+    /* ── Form Inputs ── */
+    .input-group {
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+
+    .input-label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.1s, box-shadow 0.15s var(--ease-snap);
+    }
+
+    .input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 1px var(--accent-primary), 0 0 20px var(--accent-primary-glow);
+    }
+
+    .input-mono {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+    }
+
+    .input-hint {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ── Header Mock ── */
+    .header-mock {
+      background: rgba(15, 15, 20, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-dim);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      margin-bottom: 40px;
+      border-radius: 2px;
+    }
+
+    .header-logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-logo .logo-accent {
+      color: var(--accent-primary);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .header-nav li {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      padding-bottom: 2px;
+      transition: color 0.15s;
+    }
+
+    .header-nav li:hover {
+      color: var(--text-primary);
+    }
+
+    .header-nav li.active {
+      color: var(--text-primary);
+    }
+
+    .header-nav li.active::after {
+      content: '';
+      position: absolute;
+      bottom: -17px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary-glow);
+    }
+
+    .header-user {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+    }
+
+    /* ── Page Layout Mock ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .page-count {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-dim);
+    }
+
+    /* ── Progress Bar ── */
+    .progress-bar-container {
+      max-width: 500px;
+    }
+
+    .progress-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar-value {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-primary);
+    }
+
+    .progress-bar-track {
+      height: 4px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent-primary);
+      border-radius: 2px;
+      box-shadow: 0 0 12px var(--accent-primary-glow);
+      transition: width 0.3s var(--ease-slam);
+    }
+
+    /* ── Job Row ── */
+    .job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .job-row {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 140px 220px 100px;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.15s;
+    }
+
+    .job-row:hover {
+      border-color: var(--border-bright);
+    }
+
+    .job-name {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .job-query {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .job-time {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .job-progress {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Mini Pipeline (inline in job rows) ── */
+    .job-pipeline {
+      height: 28px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      border: 1px solid var(--border-dim);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    .job-pipeline::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 8px,
+        rgba(255,90,31,0.04) 8px,
+        rgba(255,90,31,0.04) 16px
+      );
+      animation: antenna-skeleton-shift 1s linear infinite;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+
+    .job-pipeline.jp-decoding::after { opacity: 0.3; }
+    .job-pipeline.jp-resolved::after { opacity: 0; }
+    .job-pipeline.jp-resolved { border-color: rgba(34, 211, 122, 0.2); }
+
+    .job-pipeline-text {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      padding: 0 10px;
+      z-index: 1;
+      position: relative;
+      white-space: nowrap;
+      display: flex;
+    }
+
+    .job-pipeline-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      z-index: 1;
+      letter-spacing: 0.05em;
+    }
+
+    .job-pipeline.jp-skeleton .job-pipeline-text { visibility: hidden; }
+    .job-pipeline.jp-skeleton .job-pipeline-label { display: block; }
+    .job-pipeline:not(.jp-skeleton) .job-pipeline-label { display: none; }
+
+    .jp-resolved-char { color: var(--accent-primary); }
+    .jp-noise-char { color: var(--text-dim); opacity: 0.5; }
+    .job-pipeline.jp-resolved .jp-resolved-char { color: var(--accent-success); }
+
+    /* ── Fused Bar (locked in) ── */
+
+    /* Alt A: Fused — status tag inside the bar */
+    .job-fused {
+      height: 32px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      border: 1px solid var(--border-dim);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    .job-fused::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(-45deg, transparent 0px, transparent 8px, rgba(255,90,31,0.04) 8px, rgba(255,90,31,0.04) 16px);
+      animation: antenna-skeleton-shift 1s linear infinite;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    .job-fused.jf-resolved::after { opacity: 0; }
+    .job-fused.jf-resolved { border-color: rgba(34, 211, 122, 0.2); }
+    .job-fused.jf-skeleton .job-fused-data { visibility: hidden; }
+
+    .job-fused-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      padding: 0 8px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      z-index: 1;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-dim);
+    }
+
+    .job-fused-data {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      padding: 0 10px;
+      z-index: 1;
+      white-space: nowrap;
+      display: flex;
+    }
+
+    .jf-resolved-char { color: var(--accent-primary); }
+    .jf-noise-char { color: var(--text-dim); opacity: 0.5; }
+    .job-fused.jf-resolved .jf-resolved-char { color: var(--accent-success); }
+    .job-fused.jf-resolved .job-fused-tag { color: var(--accent-success); border-right-color: rgba(34, 211, 122, 0.2); }
+
+    .job-fused-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      z-index: 1;
+      letter-spacing: 0.05em;
+    }
+
+    .job-fused:not(.jf-skeleton) .job-fused-label { display: none; }
+
+    /* ── Utility ── */
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mt-32 { margin-top: 32px; }
+    .mt-40 { margin-top: 40px; }
+    .gap-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+
+    /* ══════════════════════════════════════════════════ */
+    /* ANTENNA STRIPE EXPLORATIONS                       */
+    /* ══════════════════════════════════════════════════ */
+
+    .option-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent-hot);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
+    }
+
+    .option-desc {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+      max-width: 600px;
+    }
+
+    .option-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+
+    /* ── Antenna C: Loading Skeleton (CONFIRMED) ── */
+    .antenna-skeleton {
+      height: 160px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .antenna-skeleton::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 10px,
+        rgba(255,90,31,0.04) 10px,
+        rgba(255,90,31,0.04) 20px
+      );
+      animation: antenna-skeleton-shift 1s linear infinite;
+    }
+
+    @keyframes antenna-skeleton-shift {
+      from { background-position: 0 0; }
+      to { background-position: 28px 0; }
+    }
+
+    .antenna-skeleton-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      z-index: 1;
+    }
+
+    .clip-thumb .antenna-skeleton {
+      position: absolute;
+      inset: 0;
+      height: auto;
+    }
+
+    .antenna-lt-title {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .antenna-lt-body {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* WHISTLE MOMENT EXPLORATIONS                       */
+    /* ══════════════════════════════════════════════════ */
+
+    .whistle-demo-area {
+      position: relative;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+
+    .whistle-trigger {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      user-select: none;
+    }
+
+    .whistle-trigger:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    /* Whistle C: Scan line (CONFIRMED — slow variant) */
+    .whistle-scanline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      pointer-events: none;
+      opacity: 0;
+      border-radius: 2px;
+    }
+
+    .whistle-scanline.scanning {
+      animation: whistle-scan 0.25s ease-out forwards;
+    }
+
+    .whistle-scanline.scanning-slow {
+      animation: whistle-scan 0.5s ease-out forwards;
+    }
+
+    @keyframes whistle-scan {
+      0% { top: 0; opacity: 0.8; box-shadow: 0 0 12px currentColor; }
+      80% { opacity: 0.5; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Whistle state card for demos */
+    .whistle-state-card {
+      text-align: center;
+      min-width: 200px;
+    }
+
+    .whistle-state-value {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      transition: color 0s;
+    }
+
+    .whistle-state-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* P2: SIGNAL DECODE                                  */
+    /* ══════════════════════════════════════════════════ */
+
+    .decode-bar {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      background: var(--bg-raised);
+      padding: 8px 12px;
+      border-radius: 2px;
+      border: 1px solid var(--border-dim);
+      overflow: hidden;
+      white-space: nowrap;
+      height: 36px;
+      display: flex;
+      align-items: center;
+    }
+
+    .decode-resolved {
+      color: var(--accent-primary);
+    }
+
+    .decode-noise {
+      color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* UNIFIED LOADING PIPELINE                           */
+    /* ══════════════════════════════════════════════════ */
+
+    .loading-pipeline {
+      background: var(--bg-raised);
+      border-radius: 2px;
+      border: 1px solid var(--border-dim);
+      position: relative;
+      overflow: hidden;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.3s;
+    }
+
+    .loading-pipeline::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 10px,
+        rgba(255,90,31,0.04) 10px,
+        rgba(255,90,31,0.04) 20px
+      );
+      animation: antenna-skeleton-shift 1s linear infinite;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+
+    .loading-pipeline.phase-decode::after {
+      opacity: 0.3;
+    }
+
+    .loading-pipeline.phase-complete::after {
+      opacity: 0;
+    }
+
+    .loading-pipeline.phase-complete {
+      border-color: rgba(34, 211, 122, 0.2);
+    }
+
+    .pipeline-text {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0 12px;
+      z-index: 1;
+      position: relative;
+      white-space: nowrap;
+      display: flex;
+    }
+
+    .pipeline-resolved {
+      color: var(--accent-primary);
+      transition: color 0.3s;
+    }
+
+    .pipeline-noise {
+      color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    .loading-pipeline.phase-skeleton .pipeline-text {
+      visibility: hidden;
+    }
+
+    .loading-pipeline.phase-skeleton .pipeline-skeleton-label {
+      display: block;
+    }
+
+    .pipeline-skeleton-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      z-index: 1;
+      display: none;
+      letter-spacing: 0.05em;
+    }
+
+    .loading-pipeline.phase-complete .pipeline-resolved {
+      color: var(--accent-success);
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* COMPLETION GLOW PULSE                               */
+    /* ══════════════════════════════════════════════════ */
+
+    .loading-pipeline.phase-complete.glow-pulse {
+      animation: border-glow-pulse 0.4s ease-out forwards;
+    }
+
+    @keyframes border-glow-pulse {
+      0% {
+        border-color: rgba(34, 211, 122, 0.5);
+        box-shadow: 0 0 20px rgba(34, 211, 122, 0.15), inset 0 0 12px rgba(34, 211, 122, 0.04);
+      }
+      100% {
+        border-color: rgba(34, 211, 122, 0.2);
+        box-shadow: 0 0 0px rgba(34, 211, 122, 0), inset 0 0 0px rgba(34, 211, 122, 0);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* CONCEPT 1: SCORE BUG                               */
+    /* ══════════════════════════════════════════════════ */
+
+    .score-bug {
+      background: rgba(15, 15, 20, 0.92);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      backdrop-filter: blur(8px);
+      min-width: 160px;
+    }
+
+    .score-bug-row {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      gap: 6px;
+    }
+
+    .score-bug-label {
+      color: var(--text-dim);
+      font-size: 0.5625rem;
+      letter-spacing: 0.08em;
+    }
+
+    .score-bug-val {
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .score-bug-bright {
+      color: var(--text-primary);
+    }
+
+    .score-bug-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border-dim);
+      margin: 0 4px;
+    }
+
+    .score-bug-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 10px;
+      border-top: 1px solid var(--border-dim);
+      font-size: 0.5625rem;
+    }
+
+    .score-bug-set {
+      color: var(--accent-primary);
+      font-weight: 500;
+    }
+
+    .score-bug-time {
+      color: var(--text-dim);
+    }
+
+    /* Score Bug Alt (stacked) */
+    .score-bug-alt {
+      min-width: 120px;
+    }
+
+    .score-bug-row-alt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 10px;
+    }
+
+    .score-bug-row-alt:first-child {
+      padding-top: 6px;
+    }
+
+    .score-bug-team {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 0.5625rem;
+      letter-spacing: 0.05em;
+    }
+
+    .score-bug-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .score-bug-bottom-alt {
+      padding: 4px 10px 6px;
+      border-top: 1px solid var(--border-dim);
+      font-size: 0.5rem;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.08em;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* CONCEPT 2: COMMENTARY TICKER                       */
+    /* ══════════════════════════════════════════════════ */
+
+    .ticker-demo {
+      background: rgba(15, 15, 20, 0.92);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      overflow: hidden;
+      height: 32px;
+      position: relative;
+    }
+
+    .ticker-strip {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      animation: ticker-scroll 30s linear infinite;
+      padding-left: 100%;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      padding: 0 12px;
+    }
+
+    .ticker-tag {
+      font-size: 0.5625rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 1px 4px;
+      border-radius: 2px;
+      margin-right: 6px;
+    }
+
+    .ticker-tag-ok { background: rgba(34,211,122,0.15); color: var(--accent-success); }
+    .ticker-tag-hot { background: rgba(224,64,251,0.15); color: var(--accent-hot); }
+    .ticker-tag-blue { background: rgba(59,130,246,0.15); color: var(--accent-secondary); }
+    .ticker-tag-warn { background: rgba(245,158,11,0.15); color: var(--accent-warning); }
+
+    .ticker-dim {
+      color: var(--text-dim);
+    }
+
+    .ticker-sep {
+      color: var(--border-dim);
+      padding: 0 8px;
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* CONCEPT 4: CONFIRM DELETE                           */
+    /* ══════════════════════════════════════════════════ */
+
+    .confirm-delete-container {
+      max-width: 500px;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 2px;
+      background: var(--bg-surface);
+      overflow: hidden;
+    }
+
+    .confirm-delete-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(239, 68, 68, 0.06);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+    }
+
+    .confirm-delete-flag {
+      font-family: var(--font-display);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--accent-error);
+      letter-spacing: 0.12em;
+      padding: 2px 8px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 2px;
+    }
+
+    .confirm-delete-action {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .confirm-delete-body {
+      display: flex;
+      align-items: stretch;
+      padding: 16px;
+      gap: 0;
+    }
+
+    .confirm-delete-side {
+      flex: 1;
+      padding: 0 12px;
+    }
+
+    .confirm-delete-side-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .confirm-delete-side-data {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .confirm-delete-divider {
+      width: 1px;
+      background: var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .confirm-delete-arrow {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--accent-error);
+      background: var(--bg-surface);
+      padding: 4px 0;
+    }
+
+    .confirm-delete-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-dim);
+    }
+
+    .confirm-delete-countdown {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+    }
+
+    .confirm-delete-countdown-num {
+      color: var(--accent-error);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* ASCII VOLLEYBALL SPINNER                           */
+    /* ══════════════════════════════════════════════════ */
+
+    .ascii-spinner-row {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ascii-spinner-cell {
+      text-align: center;
+    }
+
+    .ascii-spinner-cell .type-label {
+      margin-bottom: 12px;
+    }
+
+    .ascii-spinner {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      color: var(--accent-primary);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      user-select: none;
+      transition: box-shadow 0.15s var(--ease-snap), border-color 0.15s;
+    }
+
+    .ascii-spinner:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 20px var(--accent-primary-glow);
+    }
+
+    .ascii-spinner.spin-blue {
+      color: var(--accent-secondary);
+    }
+
+    .ascii-spinner.spin-blue:hover {
+      box-shadow: 0 0 20px var(--accent-secondary-glow);
+    }
+
+    .ascii-spinner.spin-hot {
+      color: var(--accent-hot);
+    }
+
+    .ascii-spinner.spin-hot:hover {
+      box-shadow: 0 0 20px rgba(224, 64, 251, 0.12);
+    }
+
+    .ascii-spinner.spin-success {
+      color: var(--accent-success);
+    }
+
+    .ascii-spinner.spin-success:hover {
+      box-shadow: 0 0 20px rgba(34, 211, 122, 0.12);
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* ANIMATED STATS COUNTER                             */
+    /* ══════════════════════════════════════════════════ */
+
+    .counter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .counter-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s var(--ease-snap);
+    }
+
+    .counter-card:hover {
+      border-color: var(--border-bright);
+    }
+
+    .counter-card.counting {
+      border-color: rgba(255, 90, 31, 0.3);
+    }
+
+    .counter-value {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .counter-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .counter-bar {
+      height: 2px;
+      background: var(--bg-raised);
+      margin-top: 12px;
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .counter-bar-fill {
+      height: 100%;
+      border-radius: 1px;
+      width: 0%;
+      transition: width 0.05s linear;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* ANIMATED NET DIVIDER                               */
+    /* ══════════════════════════════════════════════════ */
+
+    .net-divider-animated {
+      color: var(--border-dim);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      text-align: center;
+      margin: 60px 0;
+      user-select: none;
+      letter-spacing: 2px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .net-divider-animated .net-char {
+      display: inline-block;
+      transition: color 0.15s, transform 0.3s var(--ease-slam);
+    }
+
+    .net-divider-animated .net-char.ripple {
+      color: var(--accent-primary);
+      transform: translateY(-3px);
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* TERTIARY ICON SET                                  */
+    /* ══════════════════════════════════════════════════ */
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 16px;
+    }
+
+    .icon-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s var(--ease-snap);
+    }
+
+    .icon-cell:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    .icon-char {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      line-height: 1;
+      transition: color 0.15s, transform 0.2s var(--ease-slam);
+    }
+
+    .icon-cell:hover .icon-char {
+      color: var(--accent-primary);
+      transform: scale(1.15);
+    }
+
+    .icon-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* STREAMING TERMINAL LOG                             */
+    /* ══════════════════════════════════════════════════ */
+
+    .typing-terminal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.8;
+      max-width: 700px;
+      min-height: 180px;
+    }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: rgba(255, 90, 31, 0.7);
+      vertical-align: middle;
+      animation: cursor-blink 0.8s step-end infinite;
+      margin-left: 1px;
+    }
+
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ══════════════════════════════════════════════════ */
+    /* CASCADE SETTLE TRANSITION (Phase 2 → 3)          */
+    /* ══════════════════════════════════════════════════ */
+
+    .cascade-char {
+      display: inline-block;
+      transition: none;
+    }
+
+    .cascade-char.pulse {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(34, 211, 122, 0.7);
+    }
+
+    .cascade-char.settled {
+      color: var(--accent-success);
+      text-shadow: none;
+      transition: text-shadow 0.2s ease-out;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="playground">
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- HEADER MOCK                            -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="type-label">Header</div>
+      <div class="header-mock">
+        <div class="header-logo">
+          <span class="logo-accent">//</span> VOLLEYBALL CLIPPER
+        </div>
+        <ul class="header-nav">
+          <li>Upload</li>
+          <li class="active">Clips</li>
+          <li>Jobs</li>
+          <li>Settings</li>
+        </ul>
+        <div class="header-user"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- COLORS                                 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Color System</div>
+      <div class="section-subtitle">Core surfaces and borders</div>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#06060A"></div>
+          <div class="swatch-info"><div class="swatch-name">--bg-void</div><div class="swatch-hex">#06060A</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0F0F14"></div>
+          <div class="swatch-info"><div class="swatch-name">--bg-surface</div><div class="swatch-hex">#0F0F14</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#16161D"></div>
+          <div class="swatch-info"><div class="swatch-name">--bg-raised</div><div class="swatch-hex">#16161D</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1E1E28"></div>
+          <div class="swatch-info"><div class="swatch-name">--border-dim</div><div class="swatch-hex">#1E1E28</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2A2A3A"></div>
+          <div class="swatch-info"><div class="swatch-name">--border-bright</div><div class="swatch-hex">#2A2A3A</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E8E8ED"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-primary</div><div class="swatch-hex">#E8E8ED</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#7A7A8A"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-secondary</div><div class="swatch-hex">#7A7A8A</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#4A4A58"></div>
+          <div class="swatch-info"><div class="swatch-name">--text-dim</div><div class="swatch-hex">#4A4A58</div></div>
+        </div>
+      </div>
+
+      <div class="mt-40"></div>
+      <div class="section-subtitle">Accent palette</div>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#FF5A1F"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-primary</div><div class="swatch-hex">#FF5A1F · Volt Orange</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#3B82F6"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-secondary</div><div class="swatch-hex">#3B82F6 · Signal Blue</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E040FB"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-hot</div><div class="swatch-hex">#E040FB · Ace Magenta</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#22D37A"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-success</div><div class="swatch-hex">#22D37A · Clean Green</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F59E0B"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-warning</div><div class="swatch-hex">#F59E0B · Whistle Amber</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#EF4444"></div>
+          <div class="swatch-info"><div class="swatch-name">--accent-error</div><div class="swatch-hex">#EF4444 · Fault Red</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TYPOGRAPHY                             -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Typography</div>
+      <div class="section-subtitle">Space Grotesk · Inter · JetBrains Mono</div>
+
+      <div class="type-sample">
+        <div class="type-label">Display 4XL · Space Grotesk 700</div>
+        <div class="type-display-4xl">Kill Shot Detected</div>
+      </div>
+
+      <div class="type-sample">
+        <div class="type-label">Display 3XL · Space Grotesk 700</div>
+        <div class="type-display-3xl">Your Clips Are Ready</div>
+      </div>
+
+      <div class="type-sample">
+        <div class="type-label">Display 2XL · Space Grotesk 600</div>
+        <div class="type-display-2xl">Processing 3 of 7 Jobs</div>
+      </div>
+
+      <div class="type-sample">
+        <div class="type-label">Body · Inter 400</div>
+        <div class="type-body">Upload your full match footage and tell us what to look for. Our AI watches the entire game and extracts the moments that matter — kills, digs, blocks, aces. Your highlights, automatically.</div>
+      </div>
+
+      <div class="type-sample">
+        <div class="type-label">Mono Data · JetBrains Mono 400</div>
+        <div class="type-mono">
+          <span class="dim">CLIP</span> <span class="bright">00:04.32</span> &nbsp;
+          <span class="dim">FRAME</span> <span class="bright">1,847</span><span class="dim"> / 12,402</span> &nbsp;
+          <span class="dim">↑</span> <span class="bright">4.2</span><span class="dim"> MB/s</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- BUTTONS                                -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Buttons</div>
+      <div class="section-subtitle">Glow on hover, not fill change. The light turns on.</div>
+
+      <div class="button-row">
+        <button class="btn btn-primary">Generate Clips</button>
+        <button class="btn btn-secondary">View Details</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-danger">Delete Job</button>
+        <button class="btn btn-primary" disabled>Processing...</button>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- STATUS BADGES                          -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Status Badges</div>
+      <div class="section-subtitle">Terminal confidence. Monospace. Small colored dot.</div>
+
+      <div class="badge-row">
+        <span class="badge badge-queued"><span class="badge-dot"></span>[QUEUED]</span>
+        <span class="badge badge-indexing"><span class="badge-dot"></span>[INDEXING]</span>
+        <span class="badge badge-processing"><span class="badge-dot"></span>[PROCESSING]</span>
+        <span class="badge badge-complete"><span class="badge-dot"></span>[COMPLETE]</span>
+        <span class="badge badge-error"><span class="badge-dot"></span>[ERROR]</span>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- CLIP CARDS                             -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Clip Cards</div>
+      <div class="section-subtitle">The most important UI element. Thumbnail, net divider, metadata. Hover to see glow.</div>
+
+      <div class="card-grid">
+        <!-- Card 1: Complete -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-text">16:9 THUMBNAIL</span>
+            <span class="clip-duration">00:04.32</span>
+          </div>
+          <div class="clip-net-divider"></div>
+          <div class="clip-meta">
+            <div class="clip-title">Cross-Court Kill</div>
+            <div class="clip-details">
+              <span class="clip-timestamp"><span class="bright">SET 2</span> · 18:42</span>
+              <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Complete -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-text">16:9 THUMBNAIL</span>
+            <span class="clip-duration">00:03.18</span>
+          </div>
+          <div class="clip-net-divider"></div>
+          <div class="clip-meta">
+            <div class="clip-title">Pancake Save</div>
+            <div class="clip-details">
+              <span class="clip-timestamp"><span class="bright">SET 3</span> · 24:11</span>
+              <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Processing (antenna skeleton loading) -->
+        <div class="clip-card processing">
+          <div class="clip-thumb">
+            <div class="antenna-skeleton">
+              <div class="antenna-skeleton-label" style="color: var(--accent-primary);">ANALYZING...</div>
+            </div>
+          </div>
+          <div class="clip-net-divider"></div>
+          <div class="clip-meta">
+            <div class="clip-title" style="color: var(--text-secondary);">Generating clip...</div>
+            <div class="clip-details">
+              <span class="clip-timestamp">FRAME <span class="bright">847</span> / 2,401</span>
+              <span class="badge badge-processing"><span class="badge-dot"></span>[SLICING]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Complete -->
+        <div class="clip-card">
+          <div class="clip-thumb">
+            <span class="clip-thumb-text">16:9 THUMBNAIL</span>
+            <span class="clip-duration">00:05.67</span>
+          </div>
+          <div class="clip-net-divider"></div>
+          <div class="clip-meta">
+            <div class="clip-title">Back Row Attack</div>
+            <div class="clip-details">
+              <span class="clip-timestamp"><span class="bright">SET 1</span> · 09:33</span>
+              <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Readouts and Progress removed — superseded by Animated Counters and Unified Loading Pipeline -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- FORM INPUTS                            -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Inputs</div>
+      <div class="section-subtitle">Focus = orange glow. The circuit activates.</div>
+
+      <div class="gap-row">
+        <div style="flex: 1; min-width: 280px;">
+          <div class="input-group">
+            <label class="input-label">Search Query</label>
+            <input class="input" type="text" placeholder="Find kills, blocks, and aces...">
+            <div class="input-hint">Describe the moments you want to extract</div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Padding (seconds)</label>
+            <input class="input input-mono" type="text" placeholder="2.0" value="2.0">
+            <div class="input-hint">Extra time before and after each detected moment</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Static Processing Log removed — superseded by Streaming Terminal Log -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TOASTS                                 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Notifications</div>
+      <div class="section-subtitle">Broadcast alerts. Tag + headline + data. ESPN lower-third meets terminal.</div>
+
+      <div class="toast-container">
+        <!-- Success: Job complete -->
+        <div class="toast toast-success">
+          <div class="toast-header">
+            <span class="toast-tag">DONE</span>
+            <span class="toast-headline">3 clips generated</span>
+            <span class="toast-time">00:02</span>
+          </div>
+          <div class="toast-micro-net">┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼</div>
+          <div class="toast-body">
+            Job "Match Highlights" complete <span class="toast-dim">· 12 clips · 2m 34s</span>
+          </div>
+        </div>
+
+        <!-- Info: New job -->
+        <div class="toast toast-info">
+          <div class="toast-header">
+            <span class="toast-tag">NEW</span>
+            <span class="toast-headline">Job started</span>
+            <span class="toast-time">00:00</span>
+          </div>
+          <div class="toast-micro-net">┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼</div>
+          <div class="toast-body">
+            Analyzing "kills and blocks" <span class="toast-dim">· 3 sets · Beach_Finals.mp4</span>
+          </div>
+        </div>
+
+        <!-- Warning: Low confidence -->
+        <div class="toast toast-warn">
+          <div class="toast-header">
+            <span class="toast-tag">SKIP</span>
+            <span class="toast-headline">Clip below threshold</span>
+            <span class="toast-time">00:47</span>
+          </div>
+          <div class="toast-micro-net">┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼</div>
+          <div class="toast-body">
+            Confidence 0.42 at 02:14 <span class="toast-dim">· min threshold: 0.60</span>
+          </div>
+        </div>
+
+        <!-- Error: Upload failed -->
+        <div class="toast toast-error">
+          <div class="toast-header">
+            <span class="toast-tag">FAIL</span>
+            <span class="toast-headline">Upload failed</span>
+            <span class="toast-time">00:12</span>
+          </div>
+          <div class="toast-micro-net">┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼</div>
+          <div class="toast-body">
+            Connection lost — Practice_Reel.mp4 <span class="toast-dim">· 64%</span> · <span class="toast-action">RETRY ⟳</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- JOB LIST MOCK                          -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Job Dashboard</div>
+      <div class="section-subtitle">Fused bar layout — status tag baked into the pipeline. One element per row. Brackets on labels.</div>
+
+      <div class="job-list">
+        <!-- COMPLETE -->
+        <div class="job-row" style="grid-template-columns: 1fr 1fr 100px;">
+          <div>
+            <div class="job-name">Match Highlights — Set 1-3</div>
+            <div class="job-query">"kills, aces, and blocks"</div>
+          </div>
+          <div class="job-fused jf-resolved">
+            <span class="job-fused-tag">[COMPLETE]</span>
+            <div class="job-fused-data"><span class="jf-resolved-char">CLIPS:12·RES:1080p·47.2MB</span></div>
+          </div>
+          <div class="job-time">2 min ago</div>
+        </div>
+
+        <!-- SLICING (decode animation) -->
+        <div class="job-row" style="grid-template-columns: 1fr 1fr 100px; border-color: rgba(255,90,31,0.25);">
+          <div>
+            <div class="job-name">Defensive Plays</div>
+            <div class="job-query">"digs, saves, and pancakes"</div>
+          </div>
+          <div class="job-fused">
+            <span class="job-fused-tag" style="color: var(--accent-primary);">[SLICING]</span>
+            <div class="job-fused-data"><span class="jf-resolved-char" id="fused-slicing-resolved"></span><span class="jf-noise-char" id="fused-slicing-noise"></span></div>
+          </div>
+          <div class="job-time">started 45s ago</div>
+        </div>
+
+        <!-- INDEXING (skeleton) -->
+        <div class="job-row" style="grid-template-columns: 1fr 1fr 100px;">
+          <div>
+            <div class="job-name">Serve Receives</div>
+            <div class="job-query">"serve receive and passing"</div>
+          </div>
+          <div class="job-fused jf-skeleton">
+            <span class="job-fused-tag" style="color: var(--accent-secondary);">[INDEXING]</span>
+            <span class="job-fused-label">ANALYZING...</span>
+            <div class="job-fused-data"></div>
+          </div>
+          <div class="job-time">started 2 min ago</div>
+        </div>
+
+        <!-- QUEUED (skeleton) -->
+        <div class="job-row" style="grid-template-columns: 1fr 1fr 100px;">
+          <div>
+            <div class="job-name">Full Game Recap</div>
+            <div class="job-query">"best moments and highlights"</div>
+          </div>
+          <div class="job-fused jf-skeleton">
+            <span class="job-fused-tag" style="color: var(--text-dim);">[QUEUED]</span>
+            <span class="job-fused-label">WAITING...</span>
+            <div class="job-fused-data"></div>
+          </div>
+          <div class="job-time">queued 3 min ago</div>
+        </div>
+
+        <!-- ERROR -->
+        <div class="job-row" style="grid-template-columns: 1fr 1fr 100px;">
+          <div>
+            <div class="job-name">Practice Reel — Jan 28</div>
+            <div class="job-query">"spikes from position 4"</div>
+          </div>
+          <div class="job-fused jf-resolved" style="border-color: rgba(239, 68, 68, 0.2);">
+            <span class="job-fused-tag" style="color: var(--accent-error); border-right-color: rgba(239, 68, 68, 0.2);">[ERROR]</span>
+            <div class="job-fused-data"><span style="color: var(--accent-error);">Timeout after 300s</span></div>
+          </div>
+          <div class="job-time">yesterday</div>
+        </div>
+      </div>
+
+      <!-- Pipeline Phase Demo -->
+      <div style="margin-top: 40px;">
+        <div class="section-subtitle" style="margin-bottom: 16px;">Pipeline Lifecycle — click to cycle a single row through all 3 phases</div>
+
+        <div style="margin-bottom: 8px; font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.04em; color: var(--text-dim);" id="demo-phase-label">PHASE 1: SKELETON</div>
+
+        <div class="job-list">
+          <div class="job-row" style="grid-template-columns: 1fr 1fr 100px;">
+            <div>
+              <div class="job-name">Demo Job</div>
+              <div class="job-query">"pipeline lifecycle demo"</div>
+            </div>
+            <div class="job-fused jf-skeleton" id="demo-fused">
+              <span class="job-fused-tag" id="demo-tag" style="color: var(--text-dim);">[QUEUED]</span>
+              <span class="job-fused-label" id="demo-label">AWAITING DATA...</span>
+              <div class="job-fused-data"><span class="jf-resolved-char" id="demo-resolved"></span><span class="jf-noise-char" id="demo-noise"></span></div>
+            </div>
+            <div class="job-time">just now</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+          <button class="whistle-trigger" onclick="demoNext()">Next Phase &rarr;</button>
+          <button class="whistle-trigger" onclick="demoReset()">Reset</button>
+        </div>
+
+        <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <div style="text-align: center; padding: 8px; border: 1px solid var(--border-dim); border-radius: 2px;">
+            <div style="font-family: var(--font-mono); font-size: 0.625rem; color: var(--text-dim); letter-spacing: 0.08em;">PHASE 1</div>
+            <div style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-secondary); margin-top: 4px;">Skeleton</div>
+            <div style="font-family: var(--font-mono); font-size: 0.5625rem; color: var(--text-dim); margin-top: 2px;">Diagonal stripes. No data.</div>
+          </div>
+          <div style="text-align: center; padding: 8px; border: 1px solid var(--border-dim); border-radius: 2px;">
+            <div style="font-family: var(--font-mono); font-size: 0.625rem; color: var(--text-dim); letter-spacing: 0.08em;">PHASE 2</div>
+            <div style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-secondary); margin-top: 4px;">Decode</div>
+            <div style="font-family: var(--font-mono); font-size: 0.5625rem; color: var(--text-dim); margin-top: 2px;">Characters resolve from noise.</div>
+          </div>
+          <div style="text-align: center; padding: 8px; border: 1px solid var(--border-dim); border-radius: 2px;">
+            <div style="font-family: var(--font-mono); font-size: 0.625rem; color: var(--text-dim); letter-spacing: 0.08em;">PHASE 3</div>
+            <div style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-secondary); margin-top: 4px;">Resolved</div>
+            <div style="font-family: var(--font-mono); font-size: 0.5625rem; color: var(--text-dim); margin-top: 2px;">Clean readout. Done.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- FULL PAGE MOCK: CLIP GALLERY           -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="section">
+      <div class="section-title">Full Layout — Clip Gallery</div>
+      <div class="section-subtitle">What the main clips page looks like assembled.</div>
+
+      <div style="background: var(--bg-void); border: 1px solid var(--border-dim); border-radius: 2px; padding: 0;">
+        <!-- Inner header -->
+        <div class="header-mock" style="margin-bottom: 0; border-radius: 2px 2px 0 0;">
+          <div class="header-logo"><span class="logo-accent">//</span> VOLLEYBALL CLIPPER</div>
+          <ul class="header-nav">
+            <li>Upload</li>
+            <li class="active">Clips</li>
+            <li>Jobs</li>
+            <li>Settings</li>
+          </ul>
+          <div class="header-user"></div>
+        </div>
+
+        <div style="padding: 32px;">
+          <div class="page-header">
+            <div class="page-title">Your Clips</div>
+            <div class="page-count">12 clips · 3 jobs</div>
+          </div>
+
+          <div class="card-grid">
+            <div class="clip-card">
+              <div class="clip-thumb"><span class="clip-thumb-text">16:9</span><span class="clip-duration">00:04.32</span></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title">Cross-Court Kill</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp"><span class="bright">SET 2</span> · 18:42</span>
+                  <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+                </div>
+              </div>
+            </div>
+            <div class="clip-card">
+              <div class="clip-thumb"><span class="clip-thumb-text">16:9</span><span class="clip-duration">00:03.18</span></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title">Pancake Save</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp"><span class="bright">SET 3</span> · 24:11</span>
+                  <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+                </div>
+              </div>
+            </div>
+            <div class="clip-card">
+              <div class="clip-thumb"><span class="clip-thumb-text">16:9</span><span class="clip-duration">00:05.67</span></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title">Back Row Attack</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp"><span class="bright">SET 1</span> · 09:33</span>
+                  <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+                </div>
+              </div>
+            </div>
+            <div class="clip-card processing">
+              <div class="clip-thumb"><div class="antenna-skeleton"><div class="antenna-skeleton-label" style="color:var(--accent-primary)">ANALYZING...</div></div></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title" style="color:var(--text-secondary)">Generating clip...</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp">FRAME <span class="bright">847</span> / 2,401</span>
+                  <span class="badge badge-processing"><span class="badge-dot"></span>[SLICING]</span>
+                </div>
+              </div>
+            </div>
+            <div class="clip-card">
+              <div class="clip-thumb"><span class="clip-thumb-text">16:9</span><span class="clip-duration">00:02.91</span></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title">Solo Block</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp"><span class="bright">SET 2</span> · 21:08</span>
+                  <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+                </div>
+              </div>
+            </div>
+            <div class="clip-card">
+              <div class="clip-thumb"><span class="clip-thumb-text">16:9</span><span class="clip-duration">00:06.44</span></div>
+              <div class="clip-net-divider"></div>
+              <div class="clip-meta">
+                <div class="clip-title">Jump Serve Ace</div>
+                <div class="clip-details">
+                  <span class="clip-timestamp"><span class="bright">SET 1</span> · 03:17</span>
+                  <span class="badge badge-complete"><span class="badge-dot"></span>[READY]</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Bug overlay -->
+          <div style="position: relative; margin-top: 32px;">
+            <div class="score-bug score-bug-alt" style="display: inline-block;">
+              <div class="score-bug-row-alt">
+                <div class="score-bug-team">
+                  <span class="score-bug-dot" style="background: var(--accent-success);"></span>
+                  <span>DONE</span>
+                </div>
+                <div class="score-bug-val score-bug-bright">12</div>
+              </div>
+              <div class="score-bug-row-alt">
+                <div class="score-bug-team">
+                  <span class="score-bug-dot" style="background: var(--accent-primary);"></span>
+                  <span>ACTIVE</span>
+                </div>
+                <div class="score-bug-val" style="color: var(--accent-primary);">3</div>
+              </div>
+              <div class="score-bug-bottom-alt">
+                SET 2 · 00:47:12
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Commentary Ticker -->
+        <div class="ticker-demo" style="border-radius: 0 0 2px 2px;">
+          <div class="ticker-strip">
+            <span class="ticker-item"><span class="ticker-tag ticker-tag-ok">CLIP</span> Cross-Court Kill extracted <span class="ticker-dim">· 00:04.32</span></span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item"><span class="ticker-tag ticker-tag-hot">DETECT</span> 14 moments found <span class="ticker-dim">· "kills and spikes"</span></span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item"><span class="ticker-tag ticker-tag-ok">DONE</span> Job complete <span class="ticker-dim">· 12 clips · 2m 34s</span></span>
+            <span class="ticker-sep">///</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Antenna Loading Skeleton</div>
+      <div class="section-subtitle">Scrolling diagonal stripes on loading placeholders. "Signal searching."</div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+        <div class="antenna-skeleton"><div class="antenna-skeleton-label">LOADING THUMBNAIL...</div></div>
+        <div class="antenna-skeleton"><div class="antenna-skeleton-label">ANALYZING...</div></div>
+        <div class="antenna-skeleton"><div class="antenna-skeleton-label">AWAITING SOURCE</div></div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Commentary Ticker</div>
+      <div class="section-subtitle">ESPN-style scrolling text bar. Real-time activity across all jobs. Background awareness without page switching.</div>
+
+      <div class="ticker-demo">
+        <div class="ticker-strip" id="ticker-strip">
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-ok">CLIP</span> Cross-Court Kill extracted from Beach_Finals.mp4 <span class="ticker-dim">· 00:04.32 · 1080p</span></span>
+          <span class="ticker-sep">///</span>
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-hot">DETECT</span> 14 moments found in Match_20250211.mp4 <span class="ticker-dim">· "kills and spikes"</span></span>
+          <span class="ticker-sep">///</span>
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-blue">INDEX</span> Uploading Practice_Reel.mp4 <span class="ticker-dim">· ↑ 4.2 MB/s · 62%</span></span>
+          <span class="ticker-sep">///</span>
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-ok">CLIP</span> Pancake Save extracted <span class="ticker-dim">· 00:03.18 · SET 3</span></span>
+          <span class="ticker-sep">///</span>
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-warn">SKIP</span> Clip below confidence threshold (0.42) <span class="ticker-dim">· moment at 02:14</span></span>
+          <span class="ticker-sep">///</span>
+          <span class="ticker-item"><span class="ticker-tag ticker-tag-ok">DONE</span> Job "Match Highlights" complete <span class="ticker-dim">· 12 clips · 2m 34s</span></span>
+          <span class="ticker-sep">///</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Score Bug</div>
+      <div class="section-subtitle">Persistent mini-overlay. Shows job counts at a glance — like the on-screen score during a live match.</div>
+
+      <div style="position: relative; background: var(--bg-void); border: 1px solid var(--border-dim); border-radius: 2px; min-height: 160px; padding: 40px; display: flex; align-items: center; justify-content: center;">
+        <div style="color: var(--text-dim); font-family: var(--font-mono); font-size: 0.75rem;">— your app content here —</div>
+
+        <div class="score-bug score-bug-alt" style="position: absolute; bottom: 12px; left: 12px;">
+          <div class="score-bug-row-alt">
+            <div class="score-bug-team">
+              <span class="score-bug-dot" style="background: var(--accent-success);"></span>
+              <span>DONE</span>
+            </div>
+            <div class="score-bug-val score-bug-bright">12</div>
+          </div>
+          <div class="score-bug-row-alt">
+            <div class="score-bug-team">
+              <span class="score-bug-dot" style="background: var(--accent-primary);"></span>
+              <span>ACTIVE</span>
+            </div>
+            <div class="score-bug-val" style="color: var(--accent-primary);">3</div>
+          </div>
+          <div class="score-bug-bottom-alt">
+            SET 2 · 00:47:12
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Confirm Delete</div>
+      <div class="section-subtitle">Split-view confirmation for destructive actions. Countdown prevents accidental clicks.</div>
+
+      <div class="confirm-delete-container" id="confirm-delete-container">
+        <div class="confirm-delete-header">
+          <span class="confirm-delete-flag">CONFIRM</span>
+          <span class="confirm-delete-action">DELETE JOB: "Match Highlights"</span>
+        </div>
+        <div class="confirm-delete-body">
+          <div class="confirm-delete-side">
+            <div class="confirm-delete-side-label">CURRENT STATE</div>
+            <div class="confirm-delete-side-data">
+              <div>12 clips generated</div>
+              <div>3 uploaded to R2</div>
+              <div>47.2 MB total</div>
+            </div>
+          </div>
+          <div class="confirm-delete-divider">
+            <div class="confirm-delete-arrow">→</div>
+          </div>
+          <div class="confirm-delete-side">
+            <div class="confirm-delete-side-label" style="color: var(--accent-error);">AFTER DELETE</div>
+            <div class="confirm-delete-side-data" style="color: var(--accent-error); opacity: 0.7;">
+              <div>12 clips removed</div>
+              <div>R2 files deleted</div>
+              <div>Irreversible</div>
+            </div>
+          </div>
+        </div>
+        <div class="confirm-delete-footer">
+          <button class="btn btn-ghost" style="font-size: 0.75rem; padding: 8px 16px;">Cancel</button>
+          <div class="confirm-delete-countdown" id="confirm-delete-countdown">
+            <span class="confirm-delete-countdown-num">5</span>
+            <span style="color: var(--text-dim);">s</span>
+          </div>
+          <button class="btn btn-danger" style="font-size: 0.75rem; padding: 8px 16px; opacity: 0.3; cursor: not-allowed;">Confirm Delete</button>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-dim); margin-top: 8px; text-align: center;">Button activates after countdown. Can't rage-click through it.</div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ASCII VOLLEYBALL SPINNERS & ICONS                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">ASCII Spinners</div>
+      <div class="section-subtitle">Animated loading indicators. Each tells a different story. Monospace characters only.</div>
+
+      <div class="ascii-spinner-row">
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Volleyball</div>
+          <div class="ascii-spinner" id="spinner-volleyball"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Braille Dots</div>
+          <div class="ascii-spinner spin-blue" id="spinner-braille"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Impact</div>
+          <div class="ascii-spinner spin-hot" id="spinner-impact"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Signal</div>
+          <div class="ascii-spinner" id="spinner-signal"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Orbit</div>
+          <div class="ascii-spinner spin-blue" id="spinner-orbit"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Spike</div>
+          <div class="ascii-spinner spin-hot" id="spinner-spike"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Blocks</div>
+          <div class="ascii-spinner spin-success" id="spinner-blocks"></div>
+        </div>
+        <div class="ascii-spinner-cell">
+          <div class="type-label">Bounce</div>
+          <div class="ascii-spinner" id="spinner-bounce"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- TERTIARY ICON SET                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Tertiary Icons</div>
+      <div class="section-subtitle">Monospace character icons for the UI. No SVGs. Pure text. Hover to ignite.</div>
+
+      <div class="icon-grid">
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-primary);">▶</span><span class="icon-label">Play</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--text-secondary);">║</span><span class="icon-label">Pause</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-secondary);">↑</span><span class="icon-label">Upload</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-success);">✓</span><span class="icon-label">Complete</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-error);">✕</span><span class="icon-label">Error</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-hot);">◈</span><span class="icon-label">Clip</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--text-secondary);">⊞</span><span class="icon-label">Grid</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--text-secondary);">≡</span><span class="icon-label">Menu</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-secondary);">⟳</span><span class="icon-label">Retry</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--text-secondary);">◉</span><span class="icon-label">Record</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--accent-warning);">◐</span><span class="icon-label">Half</span></div>
+        <div class="icon-cell"><span class="icon-char" style="color: var(--text-secondary);">⌗</span><span class="icon-label">Tag</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ANIMATED STATS COUNTER                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Animated Counters</div>
+      <div class="section-subtitle">Numbers slam into place. Click to replay the count-up animation.</div>
+
+      <div class="counter-grid">
+        <div class="counter-card" onclick="animateCounter(this, 1847, 12402, 'FRAME', 'var(--accent-primary)')">
+          <div class="counter-value" style="color: var(--accent-primary);" data-target="1847">1,847</div>
+          <div class="counter-label">Frames Analyzed</div>
+          <div class="counter-bar"><div class="counter-bar-fill" style="background: var(--accent-primary); width: 14.9%; box-shadow: 0 0 8px var(--accent-primary-glow);"></div></div>
+        </div>
+        <div class="counter-card" onclick="animateCounter(this, 14, 14, 'CLIP', 'var(--accent-hot)')">
+          <div class="counter-value" style="color: var(--accent-hot);" data-target="14">14</div>
+          <div class="counter-label">Moments Detected</div>
+          <div class="counter-bar"><div class="counter-bar-fill" style="background: var(--accent-hot); width: 100%; box-shadow: 0 0 8px rgba(224,64,251,0.15);"></div></div>
+        </div>
+        <div class="counter-card" onclick="animateCounter(this, 12, 14, 'GEN', 'var(--accent-success)')">
+          <div class="counter-value" style="color: var(--accent-success);" data-target="12">12</div>
+          <div class="counter-label">Clips Generated</div>
+          <div class="counter-bar"><div class="counter-bar-fill" style="background: var(--accent-success); width: 85.7%; box-shadow: 0 0 8px rgba(34,211,122,0.15);"></div></div>
+        </div>
+        <div class="counter-card" onclick="animateCounter(this, 47, 60, 'MIN', 'var(--accent-secondary)')">
+          <div class="counter-value" style="color: var(--accent-secondary);" data-target="47">00:47</div>
+          <div class="counter-label">Match Duration</div>
+          <div class="counter-bar"><div class="counter-bar-fill" style="background: var(--accent-secondary); width: 78.3%; box-shadow: 0 0 8px var(--accent-secondary-glow);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STREAMING TERMINAL LOG                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <div class="net-divider-animated">───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───</div>
+
+    <div class="section">
+      <div class="section-title">Streaming Terminal Log</div>
+      <div class="section-subtitle">Processing log entries type themselves out character-by-character. Real-time terminal confidence.</div>
+
+      <div class="typing-terminal" id="typing-terminal"></div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="whistle-trigger" onclick="typingRestart()">Restart</button>
+        <button class="whistle-trigger" onclick="typingSkip()">Skip to End</button>
+      </div>
+    </div>
+
+
+  </div>
+
+  <script>
+    // ══════════════════════════════════════
+    // CONFIRMED WHISTLE — Slow Scan Wipe
+    // ══════════════════════════════════════
+
+    function whistleConfirmed() {
+      const line = document.getElementById('whistle-confirmed-line');
+      const val = document.getElementById('whistle-confirmed-val');
+      const label = document.getElementById('whistle-confirmed-label');
+
+      line.className = 'whistle-scanline';
+      void line.offsetWidth;
+      line.classList.add('scanning-slow');
+
+      setTimeout(() => {
+        val.textContent = '[COMPLETE]';
+        val.style.color = 'var(--accent-success)';
+        label.textContent = 'DONE';
+      }, 250);
+
+      setTimeout(() => {
+        val.textContent = '[PROCESSING]';
+        val.style.color = 'var(--accent-primary)';
+        label.textContent = 'CLICK TO DEMO';
+      }, 2500);
+    }
+
+
+    // ══════════════════════════════════════
+    // ASCII SPINNERS
+    // ══════════════════════════════════════
+
+    const spinners = {
+      volleyball: {
+        frames: ['◐', '◓', '◑', '◒'],
+        el: document.getElementById('spinner-volleyball'),
+        speed: 150, idx: 0
+      },
+      braille: {
+        frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+        el: document.getElementById('spinner-braille'),
+        speed: 80, idx: 0
+      },
+      impact: {
+        frames: ['#', '×', '+', '·', '+', '×'],
+        el: document.getElementById('spinner-impact'),
+        speed: 120, idx: 0
+      },
+      signal: {
+        frames: ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▇', '▆', '▅', '▄', '▃', '▂'],
+        el: document.getElementById('spinner-signal'),
+        speed: 100, idx: 0
+      },
+      orbit: {
+        frames: ['◜', '◝', '◞', '◟'],
+        el: document.getElementById('spinner-orbit'),
+        speed: 150, idx: 0
+      },
+      spike: {
+        frames: ['╱', '│', '╲', '─', '╱', '│', '╲', '─'],
+        el: document.getElementById('spinner-spike'),
+        speed: 100, idx: 0
+      },
+      blocks: {
+        frames: ['▖', '▘', '▝', '▗'],
+        el: document.getElementById('spinner-blocks'),
+        speed: 200, idx: 0
+      },
+      bounce: {
+        frames: ['⠁', '⠂', '⠄', '⡀', '⠄', '⠂'],
+        el: document.getElementById('spinner-bounce'),
+        speed: 120, idx: 0
+      }
+    };
+
+    Object.keys(spinners).forEach(key => {
+      const s = spinners[key];
+      setInterval(() => {
+        s.idx = (s.idx + 1) % s.frames.length;
+        s.el.textContent = s.frames[s.idx];
+      }, s.speed);
+      s.el.textContent = s.frames[0];
+    });
+
+
+    // ══════════════════════════════════════
+    // ANIMATED COUNTERS
+    // ══════════════════════════════════════
+
+    function animateCounter(card, target, max, prefix, color) {
+      const valueEl = card.querySelector('.counter-value');
+      const barFill = card.querySelector('.counter-bar-fill');
+      card.classList.add('counting');
+      valueEl.textContent = '0';
+      barFill.style.width = '0%';
+
+      const duration = 1200;
+      const start = performance.now();
+
+      function tick(now) {
+        const t = Math.min((now - start) / duration, 1);
+        // ease-slam curve approximation
+        const ease = 1 - Math.pow(1 - t, 4);
+        const current = Math.round(target * ease);
+
+        if (prefix === 'MIN') {
+          const mins = Math.floor(current / 1);
+          valueEl.textContent = `00:${String(mins).padStart(2, '0')}`;
+        } else {
+          valueEl.textContent = current.toLocaleString();
+        }
+
+        barFill.style.width = ((current / max) * 100) + '%';
+
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          card.classList.remove('counting');
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+
+    // ══════════════════════════════════════
+    // ANIMATED NET DIVIDER RIPPLE
+    // ══════════════════════════════════════
+
+    // Initialize all animated net dividers
+    function netRipple(el) {
+      if (el.dataset.rippling === 'true') return;
+      el.dataset.rippling = 'true';
+      const chars = el.querySelectorAll('.net-char');
+      const centerIdx = Math.floor(chars.length / 2);
+      chars.forEach((ch, i) => {
+        const dist = Math.abs(i - centerIdx);
+        setTimeout(() => {
+          ch.classList.add('ripple');
+          setTimeout(() => ch.classList.remove('ripple'), 300);
+        }, dist * 25);
+      });
+      setTimeout(() => { el.dataset.rippling = 'false'; }, 800);
+    }
+
+    const visibleNets = new Set();
+    const netObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          visibleNets.add(entry.target);
+        } else {
+          visibleNets.delete(entry.target);
+        }
+      });
+    }, { threshold: 0.8 });
+
+    document.querySelectorAll('.net-divider-animated').forEach(net => {
+      const text = net.textContent;
+      net.innerHTML = text.split('').map((c, i) =>
+        `<span class="net-char" data-idx="${i}">${c}</span>`
+      ).join('');
+      netObserver.observe(net);
+    });
+
+    // Ambient periodic ripple — random visible divider every 5-10s
+    (function ambientRipple() {
+      setTimeout(() => {
+        if (visibleNets.size > 0) {
+          const arr = Array.from(visibleNets);
+          netRipple(arr[Math.floor(Math.random() * arr.length)]);
+        }
+        ambientRipple();
+      }, 5000 + Math.random() * 5000);
+    })();
+
+
+    // ══════════════════════════════════════
+    // AUTO-TYPING TERMINAL
+    // ══════════════════════════════════════
+
+    const typingLines = [
+      { prefix: '[INDEX]', prefixClass: 'op', text: 'Uploading match_20250211.mp4 to TwelveLabs...', textClass: 'val' },
+      { prefix: '[INDEX]', prefixClass: 'op', text: 'Video indexed. ', textClass: 'val', suffix: 'ID: idx_7f3a2b', suffixClass: 'ok' },
+      { prefix: '[QUERY]', prefixClass: 'op', text: '"kills and spikes" → ', textClass: 'val', suffix: '14 moments detected', suffixClass: 'hot' },
+      { prefix: '[SLICE]', prefixClass: 'op', text: 'Generating clip 1/14... ', textClass: 'val', suffix: '00:18.42 → 00:22.74', suffixClass: 'primary' },
+      { prefix: '[SLICE]', prefixClass: 'op', text: 'Generating clip 2/14... ', textClass: 'val', suffix: '01:04.11 → 01:08.33', suffixClass: 'primary' },
+      { prefix: '[UPLOAD]', prefixClass: 'op', text: 'clip_001.mp4 → ', textClass: 'val', suffix: 'R2 ✓', suffixClass: 'ok' },
+      { prefix: '[UPLOAD]', prefixClass: 'op', text: 'clip_002.mp4 → ', textClass: 'val', suffix: 'R2 ✓', suffixClass: 'ok' },
+      { prefix: '[WARN]', prefixClass: 'warn', text: 'Clip 3 below confidence threshold (0.42). Skipping.', textClass: 'val' },
+      { prefix: '[SLICE]', prefixClass: 'op', text: 'Generating clip 4/14... ', textClass: 'val', suffix: '02:33.87 → 02:38.12', suffixClass: 'primary' },
+      { prefix: '[DONE]', prefixClass: 'ok', text: 'Job complete. ', textClass: 'val', suffix: '12 clips · 2m 34s', suffixClass: 'ok' },
+    ];
+
+    let typingLineIdx = 0;
+    let typingCharIdx = 0;
+    let typingTimer = null;
+    let typingComplete = false;
+
+    function typingRestart() {
+      typingLineIdx = 0;
+      typingCharIdx = 0;
+      typingComplete = false;
+      document.getElementById('typing-terminal').innerHTML = '';
+      clearTimeout(typingTimer);
+      typingTick();
+    }
+
+    function typingSkip() {
+      clearTimeout(typingTimer);
+      const term = document.getElementById('typing-terminal');
+      term.innerHTML = '';
+      typingLines.forEach(line => {
+        const div = document.createElement('div');
+        div.className = 'terminal-line';
+        div.innerHTML = `<span class="${line.prefixClass}">${line.prefix}</span> <span class="${line.textClass}">${line.text}</span>` +
+          (line.suffix ? `<span class="${line.suffixClass}">${line.suffix}</span>` : '');
+        term.appendChild(div);
+      });
+      typingComplete = true;
+    }
+
+    function typingTick() {
+      if (typingLineIdx >= typingLines.length) {
+        typingComplete = true;
+        // Remove cursor from last line
+        const cursor = document.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
+        return;
+      }
+
+      const term = document.getElementById('typing-terminal');
+      const line = typingLines[typingLineIdx];
+      const fullText = line.prefix + ' ' + line.text + (line.suffix || '');
+
+      // Get or create current line div
+      let currentDiv = term.querySelector('.typing-active');
+      if (!currentDiv) {
+        currentDiv = document.createElement('div');
+        currentDiv.className = 'terminal-line typing-active';
+        term.appendChild(currentDiv);
+      }
+
+      if (typingCharIdx <= fullText.length) {
+        const partial = fullText.substring(0, typingCharIdx);
+        // Color it properly
+        const prefixEnd = line.prefix.length;
+        const textEnd = prefixEnd + 1 + line.text.length;
+
+        let html = '';
+        if (typingCharIdx <= prefixEnd) {
+          html = `<span class="${line.prefixClass}">${partial}</span>`;
+        } else if (typingCharIdx <= textEnd) {
+          html = `<span class="${line.prefixClass}">${line.prefix}</span> <span class="${line.textClass}">${partial.substring(prefixEnd + 1)}</span>`;
+        } else {
+          html = `<span class="${line.prefixClass}">${line.prefix}</span> <span class="${line.textClass}">${line.text}</span><span class="${line.suffixClass || 'val'}">${partial.substring(textEnd)}</span>`;
+        }
+
+        currentDiv.innerHTML = html + '<span class="typing-cursor"></span>';
+        typingCharIdx++;
+
+        // Variable speed: fast for prefix, normal for text
+        const speed = typingCharIdx <= prefixEnd ? 15 : (20 + Math.random() * 30);
+        typingTimer = setTimeout(typingTick, speed);
+      } else {
+        // Line complete, remove cursor, move to next
+        const cursor = currentDiv.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
+        currentDiv.classList.remove('typing-active');
+        typingLineIdx++;
+        typingCharIdx = 0;
+        typingTimer = setTimeout(typingTick, 300 + Math.random() * 400);
+      }
+
+      // Auto-scroll
+      term.scrollTop = term.scrollHeight;
+    }
+
+    // Start typing on load
+    setTimeout(typingRestart, 500);
+
+
+    // ══════════════════════════════════════
+    // FUSED BAR — DECODE + PIPELINE DEMO
+    // ══════════════════════════════════════
+
+    const noiseChars = '▓░▒█▌▐╬╫╪┼┤├─│┘└┐┌?#@$&*!><}{][';
+
+    // Live decode animation for the SLICING row
+    const FUSED_LEN = 26;
+    const fusedFinal = 'FRM:1847/12402·DUR:04.32s';
+    let fusedPos = 15;
+
+    function fusedDecodeRender() {
+      const resolved = document.getElementById('fused-slicing-resolved');
+      const noise = document.getElementById('fused-slicing-noise');
+      if (!resolved || !noise) return;
+      resolved.textContent = fusedFinal.substring(0, fusedPos);
+      let n = '';
+      for (let i = fusedPos; i < FUSED_LEN; i++) {
+        n += noiseChars[Math.floor(Math.random() * noiseChars.length)];
+      }
+      noise.textContent = n;
+    }
+
+    setInterval(fusedDecodeRender, 80);
+    fusedDecodeRender();
+
+    // Pipeline phase demo
+    const DEMO_LEN = 32;
+    const demoFinal = 'SRC:Beach_Finals.mp4·DUR:00:47:12';
+    const demoTagPhase1 = '[QUEUED]';
+    const demoTagPhase2 = '[SLICING]';
+    const demoTagPhase3 = '[COMPLETE]';
+    let demoPhase = 0; // 0=skeleton, 1=decode, 2=cascading, 3=complete
+    let demoDecodePos = 0;
+    let demoDecodeInterval;
+    let demoCascading = false;
+
+    function demoRender() {
+      const el = document.getElementById('demo-fused');
+      const tag = document.getElementById('demo-tag');
+      const resolved = document.getElementById('demo-resolved');
+      const noise = document.getElementById('demo-noise');
+      const label = document.getElementById('demo-label');
+      const phaseLbl = document.getElementById('demo-phase-label');
+      if (!el) return;
+
+      if (demoCascading) return; // Don't interfere during cascade
+
+      // Reset classes
+      el.className = 'job-fused';
+      label.style.display = 'none';
+      resolved.parentElement.style.visibility = 'visible';
+
+      if (demoPhase === 0) {
+        el.classList.add('jf-skeleton');
+        tag.textContent = demoTagPhase1;
+        tag.style.color = 'var(--text-dim)';
+        tag.style.borderRightColor = '';
+        label.style.display = 'block';
+        label.textContent = 'AWAITING DATA...';
+        resolved.parentElement.style.visibility = 'hidden';
+        resolved.textContent = '';
+        noise.textContent = '';
+        phaseLbl.textContent = 'PHASE 1: SKELETON';
+        phaseLbl.style.color = 'var(--text-dim)';
+      } else if (demoPhase === 1) {
+        tag.textContent = demoTagPhase2;
+        tag.style.color = 'var(--accent-primary)';
+        tag.style.borderRightColor = '';
+        const src = demoFinal.substring(0, DEMO_LEN);
+        resolved.textContent = src.substring(0, demoDecodePos);
+        let n = '';
+        for (let i = demoDecodePos; i < DEMO_LEN; i++) {
+          n += noiseChars[Math.floor(Math.random() * noiseChars.length)];
+        }
+        noise.textContent = n;
+        phaseLbl.textContent = 'PHASE 2: DECODING \u2014 ' + Math.round((demoDecodePos / DEMO_LEN) * 100) + '%';
+        phaseLbl.style.color = 'var(--accent-primary)';
+      } else if (demoPhase === 3) {
+        el.classList.add('jf-resolved');
+        tag.textContent = demoTagPhase3;
+        tag.style.color = 'var(--accent-success)';
+        tag.style.borderRightColor = 'rgba(34, 211, 122, 0.2)';
+        resolved.textContent = demoFinal.substring(0, DEMO_LEN);
+        resolved.className = 'jf-resolved-char';
+        noise.textContent = '';
+        phaseLbl.textContent = 'PHASE 3: RESOLVED';
+        phaseLbl.style.color = 'var(--accent-success)';
+      }
+    }
+
+    function demoCascadeSettle() {
+      demoCascading = true;
+      const el = document.getElementById('demo-fused');
+      const tag = document.getElementById('demo-tag');
+      const dataDiv = tag.parentElement.querySelector('.job-fused-data');
+      const phaseLbl = document.getElementById('demo-phase-label');
+      const label = document.getElementById('demo-label');
+
+      label.style.display = 'none';
+
+      // The full string: tag chars + data chars
+      const tagFinal = demoTagPhase3;
+      const dataFinal = demoFinal.substring(0, DEMO_LEN);
+
+      // Build tag as cascade chars — start as noise
+      let tagHtml = '';
+      for (let i = 0; i < tagFinal.length; i++) {
+        const c = noiseChars[Math.floor(Math.random() * noiseChars.length)];
+        tagHtml += '<span class="cascade-char" style="color: var(--accent-primary);">' + c + '</span>';
+      }
+      tag.innerHTML = tagHtml;
+
+      // Build data as cascade chars — already-resolved portion + noise remainder
+      let dataHtml = '';
+      for (let i = 0; i < DEMO_LEN; i++) {
+        if (i < demoDecodePos) {
+          dataHtml += '<span class="cascade-char" style="color: var(--accent-primary);">' + dataFinal[i] + '</span>';
+        } else {
+          const c = noiseChars[Math.floor(Math.random() * noiseChars.length)];
+          dataHtml += '<span class="cascade-char" style="color: var(--text-dim); opacity: 0.5;">' + c + '</span>';
+        }
+      }
+      dataDiv.innerHTML = dataHtml;
+
+      // Collect all spans in order: tag spans first, then data spans
+      const tagSpans = Array.from(tag.querySelectorAll('.cascade-char'));
+      const dataSpans = Array.from(dataDiv.querySelectorAll('.cascade-char'));
+      const allSpans = tagSpans.concat(dataSpans);
+      const allFinal = tagFinal + dataFinal;
+
+      phaseLbl.textContent = 'PHASE 2 \u2192 3: CASCADE SETTLE';
+      phaseLbl.style.color = 'var(--accent-success)';
+
+      let idx = 0;
+      const cascadeInterval = setInterval(() => {
+        if (idx >= allSpans.length) {
+          clearInterval(cascadeInterval);
+          // Final lock
+          setTimeout(() => {
+            el.classList.add('jf-resolved');
+            tag.style.borderRightColor = 'rgba(34, 211, 122, 0.2)';
+            allSpans.forEach(s => { s.className = 'cascade-char settled'; });
+            phaseLbl.textContent = 'PHASE 3: RESOLVED';
+            demoCascading = false;
+            demoPhase = 3;
+          }, 150);
+          return;
+        }
+
+        const span = allSpans[idx];
+        span.textContent = allFinal[idx];
+        span.style.color = '';
+        span.style.opacity = '';
+        span.className = 'cascade-char pulse';
+
+        setTimeout(() => {
+          span.className = 'cascade-char settled';
+        }, 80);
+
+        idx++;
+      }, 20);
+    }
+
+    function demoNext() {
+      if (demoPhase === 0) {
+        demoPhase = 1;
+        demoDecodePos = 0;
+        if (demoDecodeInterval) clearInterval(demoDecodeInterval);
+        demoDecodeInterval = setInterval(() => {
+          demoDecodePos += 2;
+          if (demoDecodePos >= DEMO_LEN) {
+            demoDecodePos = DEMO_LEN;
+            clearInterval(demoDecodeInterval);
+          }
+          demoRender();
+        }, 60);
+      } else if (demoPhase === 1) {
+        if (demoDecodeInterval) clearInterval(demoDecodeInterval);
+        demoDecodePos = DEMO_LEN;
+        demoPhase = 2;
+        demoCascadeSettle();
+        return;
+      } else {
+        demoReset();
+        return;
+      }
+      demoRender();
+    }
+
+    function demoReset() {
+      if (demoDecodeInterval) clearInterval(demoDecodeInterval);
+      demoCascading = false;
+      demoPhase = 0;
+      demoDecodePos = 0;
+      // Restore tag/data to normal text nodes (undo cascade span wrapping)
+      const tag = document.getElementById('demo-tag');
+      const dataDiv = tag.parentElement.querySelector('.job-fused-data');
+      tag.innerHTML = '';
+      dataDiv.innerHTML = '<span class="jf-resolved-char" id="demo-resolved"></span><span class="jf-noise-char" id="demo-noise"></span>';
+      demoRender();
+    }
+
+    // Flicker noise in decode phase
+    setInterval(() => { if (demoPhase === 1) demoRender(); }, 80);
+    demoRender();
+
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volleyball Clipper — Videos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── DESIGN TOKENS ─────────────────────────────────── */
+    :root {
+      --bg-void: #06060A;
+      --bg-surface: #0F0F14;
+      --bg-raised: #16161D;
+      --border-dim: #1E1E28;
+      --border-bright: #2A2A3A;
+      --text-primary: #E8E8ED;
+      --text-secondary: #7A7A8A;
+      --text-dim: #4A4A58;
+      --accent-primary: #FF5A1F;
+      --accent-primary-glow: rgba(255, 90, 31, 0.15);
+      --accent-secondary: #3B82F6;
+      --accent-secondary-glow: rgba(59, 130, 246, 0.12);
+      --accent-hot: #E040FB;
+      --accent-success: #22D37A;
+      --accent-warning: #F59E0B;
+      --accent-error: #EF4444;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-snap: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    /* ── RESET ──────────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(15, 15, 20, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .logo-slash {
+      color: var(--accent-primary);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-item {
+      position: relative;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 2px;
+      transition: color 0.2s var(--ease-snap), background 0.2s var(--ease-snap);
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: var(--text-primary);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 12px;
+      right: 12px;
+      height: 2px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary-glow);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 2px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    /* ── ASCII BACKGROUND ──────────────────────────────── */
+    .ascii-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .ascii-bg-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      opacity: 0.3;
+    }
+
+    /* ── MAIN CONTENT ──────────────────────────────────── */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 96px;
+    }
+
+    /* ── PAGE HEADER ───────────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── BUTTONS ────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 10px 24px;
+      border-radius: 2px;
+      transition: all 0.2s var(--ease-snap);
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-primary-glow), 0 0 40px rgba(255, 90, 31, 0.08);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 28px rgba(255, 90, 31, 0.25), 0 0 56px rgba(255, 90, 31, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-dim);
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      border-color: var(--border-bright);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ── UPLOAD DROPZONE ───────────────────────────────── */
+    .dropzone {
+      position: relative;
+      height: 160px;
+      background: rgba(15, 15, 20, 0.5);
+      border: 2px dashed var(--border-dim);
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-snap), background 0.2s var(--ease-snap);
+      margin-bottom: 0;
+    }
+
+    .dropzone:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 32px var(--accent-primary-glow), inset 0 0 32px rgba(255, 90, 31, 0.03);
+      background: rgba(15, 15, 20, 0.7);
+    }
+
+    .dropzone-icon {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      color: var(--text-dim);
+      line-height: 1;
+      transition: color 0.2s var(--ease-snap), text-shadow 0.2s var(--ease-snap);
+    }
+
+    .dropzone:hover .dropzone-icon {
+      color: var(--accent-primary);
+      text-shadow: 0 0 16px var(--accent-primary-glow);
+    }
+
+    .dropzone-text {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .dropzone-hint {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    /* ── NET DIVIDER ───────────────────────────────────── */
+    .net-divider {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--border-bright);
+      text-align: center;
+      margin: 32px 0;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
+      letter-spacing: 0;
+    }
+
+    .net-divider .net-char {
+      display: inline-block;
+      transition: color 0.15s, transform 0.3s var(--ease-slam);
+    }
+
+    .net-divider .net-char.ripple {
+      color: var(--accent-primary);
+      transform: translateY(-3px);
+    }
+
+    /* ── VIDEO LIST ────────────────────────────────────── */
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .video-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 140px 80px 60px;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 10px 16px;
+      transition: border-color 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-snap);
+    }
+
+    .video-row:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Thumbnail */
+    .video-thumb {
+      width: 80px;
+      height: 45px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .video-thumb-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    /* Video info */
+    .video-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .video-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .video-meta-separator {
+      color: var(--border-bright);
+    }
+
+    /* Status badges */
+    .video-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .status-badge {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .status-indexed {
+      color: var(--accent-success);
+      background: rgba(34, 211, 122, 0.1);
+      border: 1px solid rgba(34, 211, 122, 0.2);
+    }
+
+    .status-indexing {
+      color: var(--accent-secondary);
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-uploading {
+      color: var(--accent-primary);
+      background: rgba(255, 90, 31, 0.1);
+      border: 1px solid rgba(255, 90, 31, 0.2);
+    }
+
+    .status-failed {
+      color: var(--accent-error);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Pulsing dot for indexing */
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-secondary);
+      animation: pulse-glow 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+      }
+      50% {
+        opacity: 0.4;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+      }
+    }
+
+    /* Status sub-text */
+    .status-sub {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    .status-sub.error-text {
+      color: rgba(239, 68, 68, 0.6);
+    }
+
+    /* Progress bar (inline) */
+    .progress-bar-inline {
+      width: 100%;
+      height: 3px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .progress-bar-inline-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s var(--ease-slam);
+    }
+
+    .progress-bar-inline-fill.fill-orange {
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary-glow);
+    }
+
+    .progress-bar-inline-fill.fill-blue {
+      background: var(--accent-secondary);
+      box-shadow: 0 0 8px var(--accent-secondary-glow);
+    }
+
+    /* Video size */
+    .video-size {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    /* Actions */
+    .video-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .action-menu-btn {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--text-dim);
+      padding: 4px 8px;
+      border-radius: 2px;
+      transition: color 0.15s var(--ease-snap), background 0.15s var(--ease-snap);
+      letter-spacing: 2px;
+    }
+
+    .action-menu-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* ── STORAGE SUMMARY ───────────────────────────────── */
+    .storage-summary {
+      margin-top: 32px;
+      padding: 16px 0;
+    }
+
+    .storage-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .storage-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-raised);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .storage-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent-secondary);
+      box-shadow: 0 0 12px var(--accent-secondary-glow);
+      transition: width 0.6s var(--ease-slam);
+    }
+
+    /* ── ENTRANCE ANIMATIONS ───────────────────────────── */
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fade-up 0.6s var(--ease-slam) both;
+    }
+
+    .delay-0 { animation-delay: 0ms; }
+    .delay-1 { animation-delay: 80ms; }
+    .delay-2 { animation-delay: 160ms; }
+    .delay-3 { animation-delay: 240ms; }
+    .delay-4 { animation-delay: 320ms; }
+    .delay-5 { animation-delay: 400ms; }
+    .delay-6 { animation-delay: 480ms; }
+    .delay-7 { animation-delay: 560ms; }
+    .delay-8 { animation-delay: 640ms; }
+    .delay-9 { animation-delay: 720ms; }
+
+    /* ── UPLOAD PROGRESS STRIPE ANIMATION ─────────────── */
+    @keyframes upload-stripe {
+      0% { background-position: 0 0; }
+      100% { background-position: 24px 0; }
+    }
+
+    .uploading-stripe {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent 0px,
+        transparent 6px,
+        rgba(255, 90, 31, 0.06) 6px,
+        rgba(255, 90, 31, 0.06) 12px
+      );
+      background-size: 24px 24px;
+      animation: upload-stripe 0.8s linear infinite;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .video-row {
+        grid-template-columns: 60px 1fr 100px;
+        gap: 10px;
+      }
+      .video-size,
+      .video-actions {
+        display: none;
+      }
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ASCII DITHERED BACKGROUND -->
+  <div class="ascii-bg">
+    <div class="ascii-bg-text">[ ASCII DITHERED BACKGROUND — VOLLEYBALL MONTAGE ]</div>
+  </div>
+
+  <!-- ── HEADER ──────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-slash">//</span> VOLLEYBALL CLIPPER
+      </div>
+      <nav class="nav">
+        <a href="home.html" class="nav-item">Home</a>
+        <a href="#" class="nav-item">Clips</a>
+        <a href="#" class="nav-item">Jobs</a>
+        <a href="videos.html" class="nav-item active">Videos</a>
+        <a href="#" class="nav-item">Settings</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <div class="avatar">JW</div>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────── -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header animate-in delay-0">
+      <h1 class="page-title">Videos</h1>
+      <button class="btn btn-primary">
+        <span style="font-family: var(--font-mono); font-size: 1rem; line-height: 1;">&#8593;</span>
+        Upload Video
+      </button>
+    </div>
+
+    <!-- UPLOAD DROPZONE -->
+    <div class="dropzone animate-in delay-1">
+      <div class="dropzone-icon">&#8593;</div>
+      <div class="dropzone-text">Drop video file or click to browse</div>
+      <div class="dropzone-hint">MP4, MOV, AVI &middot; Max 2GB</div>
+    </div>
+
+    <!-- NET DIVIDER -->
+    <div class="net-divider animate-in delay-2">&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;</div>
+
+    <!-- VIDEO LIST -->
+    <div class="video-list">
+
+      <!-- VIDEO 1 — Beach_Finals_2024.mp4 — INDEXED -->
+      <div class="video-row animate-in delay-3">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Beach_Finals_2024.mp4</div>
+          <div class="video-meta">
+            <span>01:47:23</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>8 jobs created</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>2 days ago</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-indexed">[INDEXED]</span>
+        </div>
+        <div class="video-size">2.1 GB</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+      <!-- VIDEO 2 — Practice_Reel.mp4 — INDEXING -->
+      <div class="video-row animate-in delay-4">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Practice_Reel.mp4</div>
+          <div class="video-meta">
+            <span>00:34:12</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>1h ago</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-indexing">
+            <span class="pulse-dot"></span>
+            [INDEXING]
+          </span>
+          <span class="status-sub" style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--accent-secondary);">47%</span>
+          <div class="progress-bar-inline" style="width: 100px;">
+            <div class="progress-bar-inline-fill fill-blue" style="width: 47%;"></div>
+          </div>
+        </div>
+        <div class="video-size">890 MB</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+      <!-- VIDEO 3 — Tournament_Set3.mp4 — UPLOADING -->
+      <div class="video-row animate-in delay-5 uploading-stripe">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Tournament_Set3.mp4</div>
+          <div class="video-meta">
+            <span>just now</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-uploading">[UPLOADING]</span>
+          <span class="status-sub" style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--accent-primary);">64%</span>
+          <div class="progress-bar-inline" style="width: 100px;">
+            <div class="progress-bar-inline-fill fill-orange" style="width: 64%;"></div>
+          </div>
+        </div>
+        <div class="video-size">1.4 GB</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+      <!-- VIDEO 4 — Indoor_Match_Full.mp4 — INDEXED -->
+      <div class="video-row animate-in delay-6">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Indoor_Match_Full.mp4</div>
+          <div class="video-meta">
+            <span>02:15:08</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>3 jobs created</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>1 week ago</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-indexed">[INDEXED]</span>
+        </div>
+        <div class="video-size">3.2 GB</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+      <!-- VIDEO 5 — Warmup_Drills.mp4 — INDEXED -->
+      <div class="video-row animate-in delay-7">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Warmup_Drills.mp4</div>
+          <div class="video-meta">
+            <span>00:12:45</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>1 job created</span>
+            <span class="video-meta-separator">&middot;</span>
+            <span>3 days ago</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-indexed">[INDEXED]</span>
+        </div>
+        <div class="video-size">450 MB</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+      <!-- VIDEO 6 — Bad_Upload.mp4 — FAILED -->
+      <div class="video-row animate-in delay-8">
+        <div class="video-thumb">
+          <span class="video-thumb-label">16:9</span>
+        </div>
+        <div class="video-info">
+          <div class="video-name">Bad_Upload.mp4</div>
+          <div class="video-meta">
+            <span>yesterday</span>
+          </div>
+        </div>
+        <div class="video-status">
+          <span class="status-badge status-failed">[FAILED]</span>
+          <span class="status-sub error-text">Connection lost</span>
+        </div>
+        <div class="video-size">0 B</div>
+        <div class="video-actions">
+          <button class="action-menu-btn">&middot;&middot;&middot;</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STORAGE SUMMARY -->
+    <div class="storage-summary animate-in delay-9">
+      <div class="storage-label">STORAGE: 8.04 GB / 10 GB</div>
+      <div class="storage-bar">
+        <div class="storage-bar-fill" style="width: 80.4%;"></div>
+      </div>
+    </div>
+
+  </main>
+
+<script>
+  // ── Animated Net Divider Wave ──
+  function netRipple(el) {
+    if (el.dataset.rippling === 'true') return;
+    el.dataset.rippling = 'true';
+    const chars = el.querySelectorAll('.net-char');
+    const centerIdx = Math.floor(chars.length / 2);
+    chars.forEach((ch, i) => {
+      const dist = Math.abs(i - centerIdx);
+      setTimeout(() => {
+        ch.classList.add('ripple');
+        setTimeout(() => ch.classList.remove('ripple'), 300);
+      }, dist * 25);
+    });
+    setTimeout(() => { el.dataset.rippling = 'false'; }, 800);
+  }
+
+  const visibleNets = new Set();
+  const netObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) visibleNets.add(entry.target);
+      else visibleNets.delete(entry.target);
+    });
+  }, { threshold: 0.8 });
+
+  document.querySelectorAll('.net-divider').forEach(net => {
+    const text = net.textContent;
+    net.innerHTML = text.split('').map((c, i) =>
+      `<span class="net-char" data-idx="${i}">${c}</span>`
+    ).join('');
+    netObserver.observe(net);
+  });
+
+  (function ambientRipple() {
+    setTimeout(() => {
+      if (visibleNets.size > 0) {
+        const arr = Array.from(visibleNets);
+        netRipple(arr[Math.floor(Math.random() * arr.length)]);
+      }
+      ambientRipple();
+    }, 5000 + Math.random() * 5000);
+  })();
+</script>
+
+</body>
+</html>

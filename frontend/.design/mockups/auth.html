@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volleyball Clipper — Auth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #06060A;
+      --bg-surface: #0F0F14;
+      --bg-raised: #16161D;
+      --border-dim: #1E1E28;
+      --border-bright: #2A2A3A;
+      --text-primary: #E8E8ED;
+      --text-secondary: #7A7A8A;
+      --text-dim: #4A4A58;
+      --accent-primary: #FF5A1F;
+      --accent-primary-glow: rgba(255, 90, 31, 0.15);
+      --accent-secondary: #3B82F6;
+      --accent-hot: #E040FB;
+      --accent-success: #22D37A;
+      --accent-warning: #F59E0B;
+      --accent-error: #EF4444;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-snap: cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ASCII background */
+    .ascii-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .ascii-bg-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      opacity: 0.3;
+    }
+
+    /* Auth wrapper */
+    .auth-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    /* Auth card */
+    .auth-card {
+      background: rgba(15, 15, 20, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 40px;
+    }
+
+    /* Logo */
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .logo-slash {
+      color: var(--accent-primary);
+    }
+
+    /* Tab switcher */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-dim);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      background: none;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      padding: 0 0 12px 0;
+      cursor: pointer;
+      color: var(--text-dim);
+      position: relative;
+      transition: color 0.2s var(--ease-snap);
+      text-align: center;
+    }
+
+    .tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .tab.active {
+      color: var(--text-primary);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-primary);
+    }
+
+    /* Net divider */
+    .net-divider {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--border-dim);
+      text-align: center;
+      margin-bottom: 24px;
+      user-select: none;
+      line-height: 1;
+    }
+
+    /* Form */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .field-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s var(--ease-snap), box-shadow 0.2s var(--ease-snap);
+    }
+
+    .field-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .field-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-primary-glow);
+    }
+
+    .forgot-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      align-self: flex-end;
+      margin-top: -8px;
+      transition: color 0.2s var(--ease-snap);
+    }
+
+    .forgot-link:hover {
+      color: var(--text-secondary);
+    }
+
+    /* Name field (signup only) */
+    .field-name {
+      display: none;
+    }
+
+    .field-name.visible {
+      display: flex;
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 12px 0;
+      background: var(--accent-primary);
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #ffffff;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: box-shadow 0.25s var(--ease-slam), background 0.2s var(--ease-snap);
+      margin-top: 4px;
+    }
+
+    .btn-submit:hover {
+      box-shadow: 0 0 20px var(--accent-primary-glow), 0 0 40px rgba(255, 90, 31, 0.08);
+    }
+
+    .btn-submit:active {
+      background: #e04f18;
+    }
+
+    /* Or divider */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0;
+    }
+
+    .or-divider-line {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--border-dim);
+      text-align: center;
+      letter-spacing: -0.05em;
+      overflow: hidden;
+      line-height: 1;
+    }
+
+    .or-divider-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    /* OAuth buttons */
+    .oauth-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-oauth {
+      width: 100%;
+      padding: 10px 0;
+      background: transparent;
+      border: 1px solid var(--border-dim);
+      border-radius: 2px;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: border-color 0.2s var(--ease-snap), color 0.2s var(--ease-snap);
+    }
+
+    .btn-oauth:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    .btn-oauth svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Footer */
+    .auth-footer {
+      text-align: center;
+      margin-top: 28px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .auth-footer-link {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s var(--ease-snap);
+    }
+
+    .auth-footer-link:hover {
+      color: #5b9cf7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ASCII dithered background placeholder -->
+  <div class="ascii-bg">
+    <div class="ascii-bg-text">[ ASCII DITHERED BACKGROUND — VOLLEYBALL MONTAGE ]</div>
+  </div>
+
+  <!-- Auth wrapper -->
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="logo">
+        <span class="logo-text"><span class="logo-slash">//</span> VOLLEYBALL CLIPPER</span>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="tabs">
+        <button class="tab active" data-tab="login" onclick="switchTab('login')">LOG IN</button>
+        <button class="tab" data-tab="signup" onclick="switchTab('signup')">SIGN UP</button>
+      </div>
+
+      <!-- Net divider -->
+      <div class="net-divider">&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;&boxh;&boxh;&boxv;</div>
+
+      <!-- Form -->
+      <form class="auth-form" onsubmit="return false;">
+
+        <!-- Name field (signup only) -->
+        <div class="field field-name" id="nameField">
+          <label class="field-label" for="name">FULL NAME</label>
+          <input class="field-input" type="text" id="name" placeholder="Jane Doe" autocomplete="name">
+        </div>
+
+        <!-- Email -->
+        <div class="field">
+          <label class="field-label" for="email">EMAIL</label>
+          <input class="field-input" type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label class="field-label" for="password">PASSWORD</label>
+          <input class="field-input" type="password" id="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password">
+        </div>
+
+        <!-- Forgot password (login only) -->
+        <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+
+        <!-- Submit -->
+        <button class="btn-submit" id="submitBtn">LOG IN</button>
+
+        <!-- Or divider -->
+        <div class="or-divider">
+          <span class="or-divider-line">&horbar;&horbar;&horbar;&horbar;&horbar;</span>
+          <span class="or-divider-text">or</span>
+          <span class="or-divider-line">&horbar;&horbar;&horbar;&horbar;&horbar;</span>
+        </div>
+
+        <!-- OAuth buttons -->
+        <div class="oauth-buttons">
+          <button class="btn-oauth" type="button">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Continue with Google
+          </button>
+          <button class="btn-oauth" type="button">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            Continue with GitHub
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer text -->
+    <div class="auth-footer" id="footerText">
+      Don't have an account? <a class="auth-footer-link" onclick="switchTab('signup')">Sign up</a>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      const tabs = document.querySelectorAll('.tab');
+      const nameField = document.getElementById('nameField');
+      const forgotLink = document.getElementById('forgotLink');
+      const submitBtn = document.getElementById('submitBtn');
+      const footerText = document.getElementById('footerText');
+      const passwordInput = document.getElementById('password');
+
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+      if (tab === 'login') {
+        nameField.classList.remove('visible');
+        forgotLink.style.display = '';
+        submitBtn.textContent = 'LOG IN';
+        passwordInput.autocomplete = 'current-password';
+        footerText.innerHTML = 'Don\'t have an account? <a class="auth-footer-link" onclick="switchTab(\'signup\')">Sign up</a>';
+      } else {
+        nameField.classList.add('visible');
+        forgotLink.style.display = 'none';
+        submitBtn.textContent = 'SIGN UP';
+        passwordInput.autocomplete = 'new-password';
+        footerText.innerHTML = 'Already have an account? <a class="auth-footer-link" onclick="switchTab(\'login\')">Log in</a>';
+      }
+    }
+  </script>
+
+</body>
+</html>
