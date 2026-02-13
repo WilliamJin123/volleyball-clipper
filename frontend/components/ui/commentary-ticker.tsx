@@ -343,23 +343,14 @@ export function CommentaryTicker({ className = '' }: CommentaryTickerProps) {
     return events.length > 0 ? events : (initialized ? DEFAULT_EVENTS : DEFAULT_EVENTS)
   }, [events, initialized])
 
-  // ── Pause on hover ─────────────────────────────────
-
-  const [paused, setPaused] = useState(false)
-
   return (
     <div
       className={`ticker-container overflow-hidden h-8 relative rounded-sm border border-border-dim ${className}`}
       style={{ background: 'var(--bg-void-92)' }}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       <div
         ref={stripRef}
         className="ticker-strip flex items-center h-full whitespace-nowrap font-mono text-[0.6875rem] text-text-secondary"
-        style={{
-          animationPlayState: paused ? 'paused' : 'running',
-        }}
       >
         {/* Render events twice for seamless loop */}
         {[...displayEvents, ...displayEvents].map((event, i) => (

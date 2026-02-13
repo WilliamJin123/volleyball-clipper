@@ -263,7 +263,19 @@ a {
 
 /* ── COMMENTARY TICKER ────────────────────────────── */
 .ticker-strip {
-  animation: ticker-scroll 30s linear infinite;
+  animation: ticker-scroll var(--ticker-speed, 12s) linear infinite;
+}
+.ticker-container:hover .ticker-strip {
+  --ticker-speed: 40s;
+}
+
+/* ── SCROLLBAR HIDE ──────────────────────────────── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── LIST ITEM ANIMATIONS ────────────────────────── */

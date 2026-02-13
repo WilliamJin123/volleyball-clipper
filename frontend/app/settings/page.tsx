@@ -89,6 +89,9 @@ export default function SettingsPage() {
   // Section refs for scroll
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
 
+  // Lock to prevent scroll handler from overriding manual clicks during smooth scroll
+  const clickLockRef = useRef(false)
+
   // Populate form from user data and load profile/preferences from DB
   useEffect(() => {
     if (user) {
@@ -139,35 +142,39 @@ export default function SettingsPage() {
   }, [])
 
 
-  // Intersection observer for active section tracking
+  // Scroll-based active section tracking (center of viewport)
   useEffect(() => {
-    const observers: IntersectionObserver[] = []
+    const handleScroll = () => {
+      if (clickLockRef.current) return
+      // At the very top of the page, always highlight the first section
+      if (window.scrollY < 100) {
+        setActiveSection(sidebarItems[0].id)
+        return
+      }
+      const centerY = window.innerHeight / 2
+      // Find the last section whose top is at or above viewport center
+      for (let i = sidebarItems.length - 1; i >= 0; i--) {
+        const el = sectionRefs.current[sidebarItems[i].id]
+        if (!el) continue
+        if (el.getBoundingClientRect().top <= centerY) {
+          setActiveSection(sidebarItems[i].id)
+          return
+        }
+      }
+      setActiveSection(sidebarItems[0].id)
+    }
 
-    sidebarItems.forEach((item) => {
-      const el = sectionRefs.current[item.id]
-      if (!el) return
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setActiveSection(item.id)
-              setMobileNavOpen(false)
-            }
-          })
-        },
-        { rootMargin: '-100px 0px -60% 0px', threshold: 0 }
-      )
-
-      observer.observe(el)
-      observers.push(observer)
-    })
-
-    return () => observers.forEach((o) => o.disconnect())
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Scroll to section with flash outline
   const scrollToSection = useCallback((id: string) => {
+    // Lock scroll handler so it doesn't override during smooth scroll
+    clickLockRef.current = true
+    setActiveSection(id)
+
     const el = sectionRefs.current[id]
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -178,15 +185,17 @@ export default function SettingsPage() {
         setFlashingSection(null)
       }
 
-      // Delay the flash to let the scroll animation settle
+      // Delay the flash to let the scroll animation settle, then release lock
       flashTimeoutRef.current = setTimeout(() => {
         setFlashingSection(id)
 
-        // Remove the flash class after the animation completes (0.9s animation)
         flashTimeoutRef.current = setTimeout(() => {
           setFlashingSection(null)
+          clickLockRef.current = false
         }, 1100)
-      }, 200)
+      }, 400)
+    } else {
+      clickLockRef.current = false
     }
   }, [])
 
@@ -309,8 +318,8 @@ export default function SettingsPage() {
     <div className="min-h-screen">
       <Sidebar />
       <main className="md:ml-[60px] max-w-[1000px] 2xl:max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-12 pb-24">
-        {/* Page Header */}
-        <div className="mb-8 animate-in">
+        {/* Page Header — sticky on desktop */}
+        <div className="mb-8 animate-in md:sticky md:top-0 md:z-30 md:bg-bg-void md:pt-4 md:pb-3">
           <h1 className="font-display font-bold text-xl sm:text-2xl text-text-primary">
             Settings
           </h1>

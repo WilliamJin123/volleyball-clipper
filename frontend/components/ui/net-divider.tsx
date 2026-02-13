@@ -55,10 +55,11 @@ export function NetDivider({ className = '' }: NetDividerProps) {
         // Flash all segments outward from the net line
         segments.forEach((seg, i) => {
           setTimeout(() => {
+            const originalBg = seg.style.background
             seg.style.background = 'var(--color-accent-primary)'
             seg.style.boxShadow = '0 0 6px var(--accent-primary-glow-50)'
             setTimeout(() => {
-              seg.style.background = ''
+              seg.style.background = originalBg
               seg.style.boxShadow = ''
             }, 400)
           }, i * 50)

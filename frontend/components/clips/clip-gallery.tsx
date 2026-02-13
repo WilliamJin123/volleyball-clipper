@@ -208,16 +208,16 @@ export function ClipGallery() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between gap-3 sm:gap-4 mb-6">
         {/* Left: Filter tabs */}
-        <div ref={filtersRef} className="relative flex overflow-x-auto -mx-1 px-1">
+        <div ref={filtersRef} className="relative flex overflow-x-auto -mx-1 px-1 scrollbar-hide min-w-0">
           {FILTER_CATEGORIES.map((category) => (
             <button
               key={category}
               onClick={() => handleFilterChange(category)}
               data-active={activeFilter === category}
               className={`
-                font-mono text-xs px-4 py-2 cursor-pointer
+                font-mono text-xs px-4 py-2 cursor-pointer shrink-0
                 transition-colors duration-150 relative
                 ${
                   activeFilter === category
