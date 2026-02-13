@@ -312,6 +312,7 @@ export function CommentaryTicker({ className = '' }: CommentaryTickerProps) {
           event: 'INSERT',
           schema: 'public',
           table: 'clips',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           addEvent(clipToEvent(payload.new as Clip))

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { StatusBadge } from '@/components/ui/status-badge'
 import type { Clip, Job } from '@/lib/types/database'
 
@@ -109,11 +110,12 @@ export function ClipCard({ clip, index }: ClipCardProps) {
         ) : (
           <>
             {clip.thumbnail_url && !imgError ? (
-              <img
+              <Image
                 src={clip.thumbnail_url}
                 alt={title}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
                 onError={() => setImgError(true)}
               />
             ) : clip.public_url && !videoError ? (

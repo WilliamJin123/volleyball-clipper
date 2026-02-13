@@ -12,16 +12,29 @@ export function useFlipAnimation(
   keys: string[] // array of visible item keys – changes trigger FLIP
 ) {
   const positionsRef = useRef<Map<string, DOMRect>>(new Map())
+  const prevKeysRef = useRef<string[]>([])
 
   // Before paint: snapshot current positions for comparison on next render
   useLayoutEffect(() => {
+    // Stable comparison: skip if keys haven't actually changed
+    const prev = prevKeysRef.current
+    if (
+      prev.length === keys.length &&
+      prev.every((k, i) => k === keys[i])
+    ) {
+      return
+    }
+    prevKeysRef.current = keys
+
     const container = containerRef.current
     if (!container) return
 
     const items = container.querySelectorAll<HTMLElement>('[data-flip-key]')
-    const newPositions = new Map<string, DOMRect>()
 
-    // --- Invert phase: measure new positions, apply inverse transforms ---
+    // --- First pass: read ALL new rects (no writes) ---
+    const newPositions = new Map<string, DOMRect>()
+    const deltas: Array<{ el: HTMLElement; deltaX: number; deltaY: number }> = []
+
     items.forEach((el) => {
       const key = el.dataset.flipKey!
       const newRect = el.getBoundingClientRect()
@@ -34,27 +47,24 @@ export function useFlipAnimation(
       const deltaY = oldRect.top - newRect.top
       if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return
 
-      // Instantly place at old position (no transition)
-      el.style.transform = `translate(${deltaX}px, ${deltaY}px)`
-      el.style.transition = 'none'
+      deltas.push({ el, deltaX, deltaY })
     })
 
     // Store new (actual) positions for next cycle
     positionsRef.current = newPositions
 
+    // --- Second pass: write ALL inverse transforms (no reads) ---
+    deltas.forEach(({ el, deltaX, deltaY }) => {
+      el.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+      el.style.transition = 'none'
+    })
+
     // --- Play phase: animate from old position to new position ---
     requestAnimationFrame(() => {
-      items.forEach((el) => {
-        if (
-          el.style.transform &&
-          el.style.transform !== '' &&
-          el.style.transform !== 'none'
-        ) {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
-          el.style.transform = ''
-        }
+      deltas.forEach(({ el }) => {
+        el.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+        el.style.transform = ''
       })
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keys.join(',')])
+  })
 }

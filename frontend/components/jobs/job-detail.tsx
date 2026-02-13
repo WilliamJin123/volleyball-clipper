@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useJob } from '@/lib/hooks'
@@ -10,8 +11,12 @@ import { NetDivider } from '@/components/ui/net-divider'
 import { ConfirmDelete } from '@/components/ui/confirm-delete'
 import { ClipCard } from '@/components/clips/clip-card'
 import { StreamingTerminal } from '@/components/ui/streaming-terminal'
-import { JobDetailLoadingDemo } from '@/components/jobs/job-loading-demo'
 import type { TerminalLine } from '@/components/ui/streaming-terminal'
+
+const JobDetailLoadingDemo = dynamic(
+  () => import('@/components/jobs/job-loading-demo').then(m => ({ default: m.JobDetailLoadingDemo })),
+  { ssr: false, loading: () => <div className="animate-pulse bg-bg-surface rounded-sm h-64" /> }
+)
 
 interface JobDetailProps {
   jobId: string

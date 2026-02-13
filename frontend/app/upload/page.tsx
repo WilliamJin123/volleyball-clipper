@@ -1,9 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Sidebar } from '@/components/layout'
-import { VideoUploader, type UploadState } from '@/components/upload/video-uploader'
+import type { UploadState } from '@/components/upload/video-uploader'
 import { StreamingTerminal } from '@/components/ui/streaming-terminal'
+
+const VideoUploader = dynamic(
+  () => import('@/components/upload/video-uploader').then(m => ({ default: m.VideoUploader })),
+  { ssr: false, loading: () => <div className="animate-pulse bg-bg-surface border border-border-dim rounded-sm h-40" /> }
+)
 import type { TerminalLine } from '@/components/ui/streaming-terminal'
 import { NetDivider } from '@/components/ui/net-divider'
 import { StatusBadge } from '@/components/ui/status-badge'

@@ -40,7 +40,7 @@ def analyze_video(video_id: str, prompt: str):
     # Return parsed list of segments
     return json.loads(response.data)["segments"]
 
-def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: str):
+def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: str, user_id: str | None = None):
     """
     Streams from R2 -> FFmpeg Cut -> R2.
     """
@@ -113,7 +113,7 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
                 if os.path.exists(local_thumb):
                     os.remove(local_thumb)
 
-            clips_metadata.append({
+            clip_record = {
                 "job_id": job_id,
                 "r2_path": r2_dest_key,
                 "public_url": public_url,
@@ -121,7 +121,10 @@ def cut_and_upload(video_filename: str, segments: list, padding: float, job_id: 
                 "end_time": end_time,
                 "thumbnail_r2_path": thumb_r2_path,
                 "thumbnail_url": thumbnail_url,
-            })
+            }
+            if user_id:
+                clip_record["user_id"] = user_id
+            clips_metadata.append(clip_record)
 
             # Cleanup local
             os.remove(local_output)
@@ -173,7 +176,8 @@ def process_job(job_id: str):
             video_filename=video["r2_path"],
             segments=segments,
             padding=job["padding"],
-            job_id=job_id
+            job_id=job_id,
+            user_id=job.get("user_id"),
         )
 
         # E. Insert Clips to DB

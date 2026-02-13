@@ -1,12 +1,17 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useJobs, useAnimatedList, useFlipAnimation } from '@/lib/hooks'
 import { FusedBar } from '@/components/ui/fused-bar'
 import { NetDivider } from '@/components/ui/net-divider'
-import { JobLoadingDemo } from '@/components/jobs/job-loading-demo'
 import type { JobWithVideo } from '@/lib/types/database'
+
+const JobLoadingDemo = dynamic(
+  () => import('@/components/jobs/job-loading-demo').then(m => ({ default: m.JobLoadingDemo })),
+  { ssr: false, loading: () => <div className="animate-pulse bg-bg-surface rounded-sm h-48" /> }
+)
 import type { JobStatus } from '@/lib/types/database'
 
 type FilterTab = 'all' | 'active' | 'complete' | 'failed'

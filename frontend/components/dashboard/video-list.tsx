@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useClips } from '@/lib/hooks'
 import type { Clip, Job } from '@/lib/types/database'
@@ -92,11 +93,12 @@ function InlineClipCard({ clip }: { clip: ClipWithJob }) {
         ) : (
           <>
             {clip.thumbnail_url ? (
-              <img
+              <Image
                 src={clip.thumbnail_url}
                 alt={`Clip ${clip.id.slice(0, 8)}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover"
               />
             ) : clip.public_url ? (
               <video

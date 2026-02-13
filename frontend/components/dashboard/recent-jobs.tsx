@@ -1,9 +1,14 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useJobs } from '@/lib/hooks'
 import { FusedBar } from '@/components/ui/fused-bar'
-import { DashboardJobLoadingDemo } from '@/components/jobs/job-loading-demo'
+
+const DashboardJobLoadingDemo = dynamic(
+  () => import('@/components/jobs/job-loading-demo').then(m => ({ default: m.DashboardJobLoadingDemo })),
+  { ssr: false, loading: () => <div className="animate-pulse bg-bg-surface rounded-sm h-36" /> }
+)
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date()

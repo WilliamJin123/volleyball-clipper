@@ -85,50 +85,57 @@ export function StreamingTerminal({
   onComplete,
   skipAnimation = false,
 }: StreamingTerminalProps) {
-  // Track which lines are fully rendered and the current typing state
+  // Track which lines are fully rendered
   const [completedLines, setCompletedLines] = useState<TerminalLine[]>([])
+  // Single state for the visible partial text (updated in batches)
+  const [partialCharIdx, setPartialCharIdx] = useState(0)
   const [currentLineIdx, setCurrentLineIdx] = useState(0)
-  const [currentCharIdx, setCurrentCharIdx] = useState(0)
   const [isTyping, setIsTyping] = useState(false)
   const [allDone, setAllDone] = useState(false)
 
-  const containerRef = useRef<HTMLDivElement>(null)
+  // Refs for the typing loop — avoid per-char re-renders
+  const charIdxRef = useRef(0)
+  const lineIdxRef = useRef(0)
+  const rafIdRef = useRef<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const prevLinesLenRef = useRef(0)
 
-  // Memoize the stable line count to detect new lines added
-  const lineCount = lines.length
+  // How many chars to accumulate before flushing a state update
+  const BATCH_SIZE = 4
 
-  // Clean up timer on unmount
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
     }
   }, [])
 
-  // When skipAnimation is true or active becomes false, show everything
+  // When skipAnimation is true, show everything instantly
   useEffect(() => {
     if (skipAnimation) {
       if (timerRef.current) clearTimeout(timerRef.current)
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
       setCompletedLines([...lines])
       setCurrentLineIdx(lines.length)
-      setCurrentCharIdx(0)
+      lineIdxRef.current = lines.length
+      charIdxRef.current = 0
+      setPartialCharIdx(0)
       setIsTyping(false)
       setAllDone(true)
     }
   }, [skipAnimation, lines])
 
   // Handle new lines being appended while the terminal is active
+  const lineCount = lines.length
   useEffect(() => {
     if (skipAnimation) return
     if (!active) return
-
-    // If new lines arrived and we were done, resume typing
     if (lineCount > prevLinesLenRef.current && allDone) {
       setAllDone(false)
       setIsTyping(true)
     }
-
     prevLinesLenRef.current = lineCount
   }, [lineCount, active, allDone, skipAnimation])
 
@@ -137,39 +144,51 @@ export function StreamingTerminal({
     if (skipAnimation) return
     if (!active) return
     if (lines.length === 0) return
-
     timerRef.current = setTimeout(() => {
       setIsTyping(true)
     }, startDelay)
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-    // Only start once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, startDelay, skipAnimation])
 
-  // The main typing tick
+  // Flush the ref-tracked charIdx to state (triggers re-render)
+  const flushCharIdx = useCallback(() => {
+    rafIdRef.current = requestAnimationFrame(() => {
+      setPartialCharIdx(charIdxRef.current)
+      rafIdRef.current = null
+    })
+  }, [])
+
+  // The main typing tick — uses refs to avoid per-char renders
   const tick = useCallback(() => {
     if (!active || skipAnimation) return
 
-    if (currentLineIdx >= lines.length) {
+    const lineIdx = lineIdxRef.current
+    if (lineIdx >= lines.length) {
       setIsTyping(false)
       setAllDone(true)
       onComplete?.()
       return
     }
 
-    const line = lines[currentLineIdx]
+    const line = lines[lineIdx]
     const fullText = line.prefix + ' ' + line.text + (line.suffix || '')
+    const charIdx = charIdxRef.current
 
-    if (currentCharIdx <= fullText.length) {
-      // Still typing current line
-      setCurrentCharIdx((prev) => prev + 1)
+    if (charIdx <= fullText.length) {
+      // Advance character
+      charIdxRef.current = charIdx + 1
+
+      // Batch: only flush state every BATCH_SIZE chars or at end of line
+      if (charIdxRef.current % BATCH_SIZE === 0 || charIdxRef.current > fullText.length) {
+        flushCharIdx()
+      }
 
       const prefixEnd = line.prefix.length
       const speed =
-        currentCharIdx <= prefixEnd
+        charIdx <= prefixEnd
           ? prefixSpeed
           : textSpeed + Math.random() * textJitter
 
@@ -177,16 +196,16 @@ export function StreamingTerminal({
     } else {
       // Line complete, add to completed and move on
       setCompletedLines((prev) => [...prev, line])
-      setCurrentLineIdx((prev) => prev + 1)
-      setCurrentCharIdx(0)
+      lineIdxRef.current = lineIdx + 1
+      setCurrentLineIdx(lineIdx + 1)
+      charIdxRef.current = 0
+      setPartialCharIdx(0)
 
       timerRef.current = setTimeout(tick, linePause + Math.random() * linePauseJitter)
     }
   }, [
     active,
     skipAnimation,
-    currentLineIdx,
-    currentCharIdx,
     lines,
     prefixSpeed,
     textSpeed,
@@ -194,6 +213,7 @@ export function StreamingTerminal({
     linePause,
     linePauseJitter,
     onComplete,
+    flushCharIdx,
   ])
 
   // Drive the tick loop
@@ -201,21 +221,15 @@ export function StreamingTerminal({
     if (isTyping && !skipAnimation) {
       tick()
     }
-    // Only re-trigger when isTyping starts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTyping])
-
-  // Re-trigger tick on char/line change
-  useEffect(() => {
-    // This is driven by the setTimeout in tick itself
-  }, [currentCharIdx, currentLineIdx])
 
   // Auto-scroll to bottom
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight
     }
-  }, [completedLines, currentCharIdx])
+  }, [completedLines, partialCharIdx])
 
   // Build the partial HTML for the currently-typing line
   const currentLineHtml = useMemo(() => {
@@ -224,16 +238,16 @@ export function StreamingTerminal({
 
     const line = lines[currentLineIdx]
     const fullText = line.prefix + ' ' + line.text + (line.suffix || '')
-    const partial = fullText.substring(0, currentCharIdx)
+    const partial = fullText.substring(0, partialCharIdx)
 
     const prefixEnd = line.prefix.length
     const textEnd = prefixEnd + 1 + line.text.length
 
-    if (currentCharIdx <= prefixEnd) {
+    if (partialCharIdx <= prefixEnd) {
       return (
         <span className={colorMap[line.prefixClass]}>{partial}</span>
       )
-    } else if (currentCharIdx <= textEnd) {
+    } else if (partialCharIdx <= textEnd) {
       return (
         <>
           <span className={colorMap[line.prefixClass]}>{line.prefix}</span>
@@ -255,7 +269,7 @@ export function StreamingTerminal({
         </>
       )
     }
-  }, [currentLineIdx, currentCharIdx, lines, skipAnimation])
+  }, [currentLineIdx, partialCharIdx, lines, skipAnimation])
 
   return (
     <div

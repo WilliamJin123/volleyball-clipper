@@ -161,6 +161,22 @@ a {
   50% { opacity: 0.6; }
 }
 
+@keyframes decode-clip-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0% 0 0); }
+}
+
+@keyframes decode-clip-hide {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 0 100%); }
+}
+
+@keyframes cascade-char-settle {
+  0% { color: var(--color-text-dim); text-shadow: none; }
+  40% { color: #fff; text-shadow: 0 0 8px rgba(34, 211, 122, 0.7); }
+  100% { color: var(--color-accent-success); text-shadow: none; }
+}
+
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }

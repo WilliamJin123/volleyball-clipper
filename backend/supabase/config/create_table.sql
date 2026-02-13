@@ -39,6 +39,7 @@ create table jobs (
 create table clips (
   id uuid default gen_random_uuid() primary key,
   job_id uuid references jobs(id) on delete cascade not null,
+  user_id uuid references profiles(id) on delete cascade, -- For Realtime subscription filtering
   r2_path text not null,           -- e.g. "clips/clip_abc.mp4"
   public_url text not null,        -- The watchable link
   start_time float,
