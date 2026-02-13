@@ -4,6 +4,11 @@ create table profiles (
   email text,
   full_name text,
   credits int default 10, -- For future monetization
+  -- User preferences (settings page)
+  default_clip_padding float default 2.0,
+  default_min_confidence float default 0.60,
+  output_resolution text default '720p',
+  auto_retry boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

@@ -73,11 +73,11 @@ export default function SignupPage() {
         </div>
 
         {/* Success card */}
-        <div className="relative z-10 w-full max-w-[400px] px-5">
+        <div className="relative z-10 w-full max-w-[400px] mx-4 sm:mx-0 px-5">
           <div
-            className="border border-border-dim rounded-sm p-10"
+            className="border border-border-dim rounded-sm p-6 sm:p-8 md:p-10"
             style={{
-              background: 'rgba(15, 15, 20, 0.92)',
+              background: 'var(--bg-void-92)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
             }}
@@ -126,12 +126,12 @@ export default function SignupPage() {
       </div>
 
       {/* Auth wrapper */}
-      <div className="relative z-10 w-full max-w-[400px] px-5 animate-in">
+      <div className="relative z-10 w-full max-w-[400px] mx-4 sm:mx-0 px-5 animate-in">
         {/* Auth card */}
         <div
-          className="border border-border-dim rounded-sm p-10"
+          className="border border-border-dim rounded-sm p-6 sm:p-8 md:p-10"
           style={{
-            background: 'rgba(15, 15, 20, 0.92)',
+            background: 'var(--bg-void-92)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
           }}
@@ -173,7 +173,7 @@ export default function SignupPage() {
                 placeholder="Jane Doe"
                 required
                 autoComplete="name"
-                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(255,90,31,0.15)]"
+                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_var(--accent-primary-glow)]"
               />
             </div>
 
@@ -193,7 +193,7 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
-                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(255,90,31,0.15)]"
+                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_var(--accent-primary-glow)]"
               />
             </div>
 
@@ -213,7 +213,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="new-password"
-                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(255,90,31,0.15)]"
+                className="bg-bg-surface border border-border-dim rounded-sm px-3.5 py-2.5 font-body text-sm text-text-primary placeholder:text-text-dim outline-none transition-all duration-200 focus:border-accent-primary focus:shadow-[0_0_0_3px_var(--accent-primary-glow)]"
               />
             </div>
 
@@ -221,7 +221,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-accent-primary rounded-sm font-display font-bold text-sm text-white tracking-wide cursor-pointer transition-all duration-250 mt-1 hover:shadow-[0_0_20px_rgba(255,90,31,0.15),0_0_40px_rgba(255,90,31,0.08)] active:bg-[#e04f18] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-accent-primary rounded-sm font-display font-bold text-sm text-white tracking-wide cursor-pointer transition-all duration-250 mt-1 hover:shadow-[0_0_20px_var(--accent-primary-glow),0_0_40px_var(--accent-primary-glow-08)] active:[filter:brightness(0.85)] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? 'SIGNING UP...' : 'SIGN UP'}
             </button>

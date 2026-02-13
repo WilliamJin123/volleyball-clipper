@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { Header } from '@/components/layout'
+import { Sidebar } from '@/components/layout'
 import { CreateJobForm } from '@/components/jobs/create-job-form'
 
 export default function NewJobPage() {
   return (
-    <div>
-      <Header />
-      <main className="max-w-[1200px] mx-auto px-8 py-10 pb-20">
+    <div className="min-h-screen">
+      <Sidebar />
+      <main className="md:ml-[60px] max-w-[1600px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-10 pb-20">
         {/* Page Header */}
         <div className="mb-8 animate-in">
           <Link

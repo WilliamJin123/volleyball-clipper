@@ -43,7 +43,7 @@ export function FusedBar({ status, clipCount, className = '' }: FusedBarProps) {
         <div
           className="absolute inset-0 pointer-events-none z-[1]"
           style={{
-            backgroundImage: `repeating-linear-gradient(-45deg, transparent 0px, transparent 6px, rgba(255, 90, 31, 0.06) 6px, rgba(255, 90, 31, 0.06) 12px)`,
+            backgroundImage: `repeating-linear-gradient(-45deg, transparent 0px, transparent 6px, var(--accent-primary-glow-06) 6px, var(--accent-primary-glow-06) 12px)`,
             backgroundSize: '24px 24px',
             animation: 'upload-stripe 3s linear infinite',
           }}
@@ -53,7 +53,7 @@ export function FusedBar({ status, clipCount, className = '' }: FusedBarProps) {
         <div
           className="absolute inset-0 pointer-events-none z-[1]"
           style={{
-            backgroundImage: `repeating-linear-gradient(-45deg, transparent 0px, transparent 6px, rgba(239, 68, 68, 0.06) 6px, rgba(239, 68, 68, 0.06) 12px)`,
+            backgroundImage: `repeating-linear-gradient(-45deg, transparent 0px, transparent 6px, var(--accent-error-glow-06) 6px, var(--accent-error-glow-06) 12px)`,
             backgroundSize: '24px 24px',
           }}
         />

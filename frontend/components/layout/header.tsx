@@ -102,7 +102,7 @@ export function Header() {
     <header
       className="sticky top-0 z-100 flex items-center justify-between h-[56px] px-5 border-b border-border-dim"
       style={{
-        background: 'rgba(15, 15, 20, 0.8)',
+        background: 'var(--bg-void-80)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
@@ -112,7 +112,7 @@ export function Header() {
         <Logo size="sm" />
 
         {user && (
-          <nav ref={navRef} className="relative flex items-center gap-1">
+          <nav ref={navRef} className="relative hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + '/')
@@ -147,7 +147,7 @@ export function Header() {
                 left: `${navIndicator.left + navIndicator.width * 0.1}px`,
                 width: `${navIndicator.width * 0.8}px`,
                 opacity: navIndicator.ready ? 1 : 0,
-                boxShadow: '0 0 8px rgba(255, 90, 31, 0.5)',
+                boxShadow: '0 0 8px var(--accent-primary-glow-50)',
               }}
             />
           </nav>
@@ -178,7 +178,7 @@ export function Header() {
             {/* Dropdown */}
             {dropdownOpen && (
               <div
-                className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-sm
+                className="absolute right-0 top-[calc(100%+8px)] w-48 max-w-[calc(100vw-2rem)] rounded-sm
                   bg-bg-raised border border-border-dim
                   shadow-lg shadow-black/40 overflow-hidden"
               >

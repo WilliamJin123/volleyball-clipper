@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useJobs } from '@/lib/hooks'
 import { FusedBar } from '@/components/ui/fused-bar'
+import { DashboardJobLoadingDemo } from '@/components/jobs/job-loading-demo'
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date()
@@ -67,11 +68,7 @@ export function RecentJobs() {
 
       {/* Job list */}
       {loading ? (
-        <div className="flex flex-col gap-2">
-          <JobRowSkeleton />
-          <JobRowSkeleton />
-          <JobRowSkeleton />
-        </div>
+        <DashboardJobLoadingDemo />
       ) : recentJobs.length === 0 ? (
         <div className="bg-bg-surface border border-border-dim rounded-sm p-8 text-center">
           <p className="font-mono text-sm text-text-dim mb-1">No jobs yet</p>

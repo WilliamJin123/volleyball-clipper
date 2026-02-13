@@ -47,7 +47,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
         segments.forEach((seg, i) => {
           setTimeout(() => {
             seg.style.background = 'var(--color-accent-primary)'
-            seg.style.boxShadow = '0 0 6px rgba(255, 90, 31, 0.5)'
+            seg.style.boxShadow = '0 0 6px var(--accent-primary-glow-50)'
             setTimeout(() => {
               seg.style.background = ''
               seg.style.boxShadow = ''
@@ -116,7 +116,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
       className={`select-none overflow-hidden my-8 cursor-pointer flex items-center justify-center gap-1.5 ${className}`}
     >
       {/* Left pole */}
-      <div ref={leftPoleRef} className="flex flex-col items-center gap-px">
+      <div ref={leftPoleRef} className="flex flex-col items-center gap-px shrink-0">
         {poleSegments.map((_, i) => (
           <div
             key={`lp-${i}`}
@@ -124,7 +124,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
             style={{
               width: '2px',
               height: i === POLE_HEIGHT ? '2px' : '4px',
-              background: i === POLE_HEIGHT ? 'transparent' : 'var(--color-border-dim)',
+              background: i === POLE_HEIGHT ? 'transparent' : 'var(--color-border-bright)',
               transition: 'background 0.2s, box-shadow 0.3s',
             }}
           />
@@ -132,7 +132,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
       </div>
 
       {/* Net line */}
-      <div className="font-mono text-xs text-border-bright whitespace-nowrap">
+      <div className="font-mono text-xs text-border-bright whitespace-nowrap overflow-hidden min-w-0">
         {NET_PATTERN.split('').map((c, i) => (
           <span
             key={i}
@@ -145,7 +145,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
       </div>
 
       {/* Right pole */}
-      <div ref={rightPoleRef} className="flex flex-col items-center gap-px">
+      <div ref={rightPoleRef} className="flex flex-col items-center gap-px shrink-0">
         {poleSegments.map((_, i) => (
           <div
             key={`rp-${i}`}
@@ -153,7 +153,7 @@ export function NetDivider({ className = '' }: NetDividerProps) {
             style={{
               width: '2px',
               height: i === POLE_HEIGHT ? '2px' : '4px',
-              background: i === POLE_HEIGHT ? 'transparent' : 'var(--color-border-dim)',
+              background: i === POLE_HEIGHT ? 'transparent' : 'var(--color-border-bright)',
               transition: 'background 0.2s, box-shadow 0.3s',
             }}
           />

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Header } from '@/components/layout'
+import { Sidebar } from '@/components/layout'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { VideoList } from '@/components/dashboard/video-list'
 import { RecentJobs } from '@/components/dashboard/recent-jobs'
@@ -9,12 +9,12 @@ import { NetDivider } from '@/components/ui/net-divider'
 
 export default function DashboardPage() {
   return (
-    <div>
-      <Header />
-      <main className="max-w-[1120px] mx-auto px-6 py-12 pb-24">
+    <div className="min-h-screen">
+      <Sidebar />
+      <main className="md:ml-[60px] max-w-[1600px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-12 pb-24">
         {/* Hero Section */}
-        <div className="glass-panel rounded-sm py-14 px-6 text-center mb-10 border border-border-dim animate-in">
-          <h1 className="font-display font-bold text-4xl tracking-tight text-text-primary mb-3">
+        <div className="glass-panel rounded-sm rounded-b-none py-14 px-6 text-center border border-b-0 border-border-dim animate-in">
+          <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl tracking-tight text-text-primary mb-3">
             <span className="text-accent-primary">//</span> VOLLEYCLIP
           </h1>
           <p className="font-body text-[1.0625rem] text-text-secondary mb-9">
@@ -28,15 +28,15 @@ export default function DashboardPage() {
                 transition-all duration-200 hover:-translate-y-px"
               style={{
                 boxShadow:
-                  '0 0 20px rgba(255, 90, 31, 0.15), 0 0 40px rgba(255, 90, 31, 0.08)',
+                  '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.boxShadow =
-                  '0 0 28px rgba(255, 90, 31, 0.25), 0 0 56px rgba(255, 90, 31, 0.12)'
+                  '0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.boxShadow =
-                  '0 0 20px rgba(255, 90, 31, 0.15), 0 0 40px rgba(255, 90, 31, 0.08)'
+                  '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)'
               }}
             >
               Upload Video
@@ -63,7 +63,6 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
-
         {/* Stats Strip */}
         <div className="animate-in animate-delay-1">
           <StatsCards />
@@ -92,3 +91,4 @@ export default function DashboardPage() {
     </div>
   )
 }
+

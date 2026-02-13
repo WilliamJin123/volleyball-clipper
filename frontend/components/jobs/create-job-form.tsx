@@ -35,6 +35,23 @@ export function CreateJobForm({
   const supabase = createClient()
   const isFirstRender = useRef(true)
 
+  // Load user's saved preference defaults
+  useEffect(() => {
+    if (!user) return
+    const loadDefaults = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('default_clip_padding, default_min_confidence')
+        .eq('id', user.id)
+        .single()
+      if (data) {
+        if (data.default_clip_padding != null) setPadding(data.default_clip_padding)
+        if (data.default_min_confidence != null) setMinConfidence(data.default_min_confidence)
+      }
+    }
+    loadDefaults()
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Measure content height for smooth animation
   useEffect(() => {
     if (contentRef.current) {
@@ -221,7 +238,7 @@ export function CreateJobForm({
           </div>
 
           {/* Padding + Min Confidence - 2-col grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
               <label
                 htmlFor="padding"
@@ -229,40 +246,92 @@ export function CreateJobForm({
               >
                 Padding (seconds)
               </label>
-              <input
-                id="padding"
-                type="number"
-                value={padding}
-                onChange={(e) => setPadding(Number(e.target.value))}
-                min={0}
-                max={10}
-                step={0.5}
-                className="w-full h-10 px-3 bg-bg-void border border-border-dim rounded-sm
-                  font-mono text-[0.8125rem] text-text-primary
-                  focus:border-accent-primary focus:outline-none
-                  transition-colors duration-150"
-              />
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setPadding(Math.max(0, padding - 0.5))}
+                  className="flex items-center justify-center w-[36px] h-10
+                    bg-bg-raised border border-border-dim rounded-l-sm
+                    font-mono text-sm text-text-secondary
+                    transition-all duration-150 cursor-pointer
+                    hover:bg-bg-surface hover:text-text-primary hover:border-border-bright
+                    active:bg-accent-primary/10"
+                >
+                  &minus;
+                </button>
+                <input
+                  id="padding"
+                  type="number"
+                  value={padding}
+                  onChange={(e) => setPadding(Number(e.target.value))}
+                  min={0}
+                  max={10}
+                  step={0.5}
+                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void border-y border-border-dim
+                    font-mono text-[0.8125rem] text-text-primary text-center
+                    focus:border-accent-primary focus:outline-none
+                    transition-colors duration-150"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPadding(Math.min(10, padding + 0.5))}
+                  className="flex items-center justify-center w-[36px] h-10
+                    bg-bg-raised border border-border-dim border-l-0 rounded-r-sm
+                    font-mono text-sm text-text-secondary
+                    transition-all duration-150 cursor-pointer
+                    hover:bg-bg-surface hover:text-text-primary hover:border-border-bright
+                    active:bg-accent-primary/10"
+                >
+                  +
+                </button>
+              </div>
             </div>
             <div>
               <label
                 htmlFor="min-confidence"
                 className="block font-mono text-[0.625rem] text-text-dim uppercase tracking-widest mb-2"
               >
-                Min Confidence
+                Min Confidence (AI match certainty)
               </label>
-              <input
-                id="min-confidence"
-                type="number"
-                value={minConfidence}
-                onChange={(e) => setMinConfidence(Number(e.target.value))}
-                min={0}
-                max={1}
-                step={0.05}
-                className="w-full h-10 px-3 bg-bg-void border border-border-dim rounded-sm
-                  font-mono text-[0.8125rem] text-text-primary
-                  focus:border-accent-primary focus:outline-none
-                  transition-colors duration-150"
-              />
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setMinConfidence(Math.max(0, +(minConfidence - 0.05).toFixed(2)))}
+                  className="flex items-center justify-center w-[36px] h-10
+                    bg-bg-raised border border-border-dim rounded-l-sm
+                    font-mono text-sm text-text-secondary
+                    transition-all duration-150 cursor-pointer
+                    hover:bg-bg-surface hover:text-text-primary hover:border-border-bright
+                    active:bg-accent-primary/10"
+                >
+                  &minus;
+                </button>
+                <input
+                  id="min-confidence"
+                  type="number"
+                  value={minConfidence}
+                  onChange={(e) => setMinConfidence(Number(e.target.value))}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void border-y border-border-dim
+                    font-mono text-[0.8125rem] text-text-primary text-center
+                    focus:border-accent-primary focus:outline-none
+                    transition-colors duration-150"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMinConfidence(Math.min(1, +(minConfidence + 0.05).toFixed(2)))}
+                  className="flex items-center justify-center w-[36px] h-10
+                    bg-bg-raised border border-border-dim border-l-0 rounded-r-sm
+                    font-mono text-sm text-text-secondary
+                    transition-all duration-150 cursor-pointer
+                    hover:bg-bg-surface hover:text-text-primary hover:border-border-bright
+                    active:bg-accent-primary/10"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
 

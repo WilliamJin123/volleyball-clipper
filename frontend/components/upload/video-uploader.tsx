@@ -224,22 +224,40 @@ export function VideoUploader({ onUploadStateChange }: VideoUploaderProps) {
         transition-all duration-200
         ${
           dragActive
-            ? 'border-border-bright bg-[rgba(15,15,20,0.7)]'
-            : 'border-border-dim bg-[rgba(15,15,20,0.5)]'
+            ? 'border-transparent bg-[var(--bg-void-70)] marching-active'
+            : 'border-border-dim bg-[var(--bg-void-50)]'
         }
         ${isUploading ? 'pointer-events-none opacity-60' : ''}
-        hover:border-border-bright hover:bg-[rgba(15,15,20,0.7)]
+        hover:border-transparent hover:bg-[var(--bg-void-70)]
         group
       `}
       style={
         dragActive
           ? {
               boxShadow:
-                '0 0 32px var(--accent-primary-glow), inset 0 0 32px rgba(255, 90, 31, 0.03)',
+                '0 0 32px var(--accent-primary-glow), inset 0 0 32px var(--accent-primary-glow-03)',
             }
           : undefined
       }
     >
+      {/* Marching ants animated border on hover */}
+      <svg
+        className={`absolute inset-0 w-full h-full pointer-events-none rounded-sm ${
+          dragActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        } transition-opacity duration-200`}
+        overflow="visible"
+      >
+        <rect
+          x="0" y="0"
+          width="100%" height="100%"
+          rx="2" ry="2"
+          fill="none"
+          stroke="var(--color-border-bright)"
+          strokeWidth="2"
+          strokeDasharray="8 6"
+          className="marching-ants-rect"
+        />
+      </svg>
       <input
         ref={inputRef}
         type="file"

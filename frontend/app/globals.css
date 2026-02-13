@@ -27,7 +27,30 @@
 
 :root {
   --accent-primary-glow: rgba(255, 90, 31, 0.15);
+  --accent-primary-glow-03: rgba(255, 90, 31, 0.03);
+  --accent-primary-glow-08: rgba(255, 90, 31, 0.08);
+  --accent-primary-glow-10: rgba(255, 90, 31, 0.10);
+  --accent-primary-glow-12: rgba(255, 90, 31, 0.12);
+  --accent-primary-glow-04: rgba(255, 90, 31, 0.04);
+  --accent-primary-glow-06: rgba(255, 90, 31, 0.06);
+  --accent-primary-glow-25: rgba(255, 90, 31, 0.25);
+  --accent-primary-glow-30: rgba(255, 90, 31, 0.30);
+  --accent-primary-glow-50: rgba(255, 90, 31, 0.50);
+  --accent-primary-glow-70: rgba(255, 90, 31, 0.70);
   --accent-secondary-glow: rgba(59, 130, 246, 0.12);
+  --bg-void-50: rgba(6, 6, 10, 0.50);
+  --bg-void-70: rgba(6, 6, 10, 0.70);
+  --bg-void-75: rgba(6, 6, 10, 0.75);
+  --bg-void-80: rgba(6, 6, 10, 0.80);
+  --bg-void-85: rgba(6, 6, 10, 0.85);
+  --bg-void-90: rgba(6, 6, 10, 0.90);
+  --bg-void-92: rgba(6, 6, 10, 0.92);
+  --bg-void-95: rgba(6, 6, 10, 0.95);
+  --accent-error-glow-06: rgba(239, 68, 68, 0.06);
+  --accent-error-glow-08: rgba(239, 68, 68, 0.08);
+  --accent-error-glow-12: rgba(239, 68, 68, 0.12);
+  --accent-error-glow-15: rgba(239, 68, 68, 0.15);
+  --accent-error-glow-30: rgba(239, 68, 68, 0.30);
 }
 
 /* ── RESET / BASE ──────────────────────────────────── */
@@ -36,12 +59,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  overflow-x: clip;
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--color-bg-void);
   color: var(--color-text-primary);
   min-height: 100vh;
   line-height: 1.5;
+  overflow-x: clip;
 }
 
 a {
@@ -111,14 +140,19 @@ a {
   100% { background-position: 24px 0; }
 }
 
+@keyframes antenna-skeleton-shift {
+  from { background-position: 0 0; }
+  to { background-position: 28px 0; }
+}
+
 @keyframes pulse-border {
   0%, 100% {
-    border-color: rgba(255, 90, 31, 0.3);
-    box-shadow: 0 0 12px rgba(255, 90, 31, 0.06);
+    border-color: var(--accent-primary-glow-30);
+    box-shadow: 0 0 12px var(--accent-primary-glow-06);
   }
   50% {
-    border-color: rgba(255, 90, 31, 0.7);
-    box-shadow: 0 0 24px rgba(255, 90, 31, 0.12);
+    border-color: var(--accent-primary-glow-70);
+    box-shadow: 0 0 24px var(--accent-primary-glow-12);
   }
 }
 
@@ -135,6 +169,32 @@ a {
 @keyframes blink {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 /* ── ANIMATION UTILITIES ──────────────────────────── */
@@ -178,16 +238,160 @@ a {
     -45deg,
     transparent 0px,
     transparent 6px,
-    rgba(255, 90, 31, 0.06) 6px,
-    rgba(255, 90, 31, 0.06) 12px
+    var(--accent-primary-glow-06) 6px,
+    var(--accent-primary-glow-06) 12px
   );
   background-size: 24px 24px;
   animation: upload-stripe 0.8s linear infinite;
 }
 
+/* ── COMMENTARY TICKER ────────────────────────────── */
+.ticker-strip {
+  animation: ticker-scroll 30s linear infinite;
+}
+
+/* ── LIST ITEM ANIMATIONS ────────────────────────── */
+@keyframes list-item-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes list-item-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+}
+
+.list-item-entering {
+  animation: list-item-enter 0.3s var(--ease-slam) both;
+}
+
+.list-item-exiting {
+  animation: list-item-exit 0.3s var(--ease-slam) both;
+  pointer-events: none;
+}
+
+/* Suppress list animations during tab/filter cross-fade */
+.suppress-list-anim .list-item-exiting,
+.suppress-list-anim .list-item-entering {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ── NUMBER STEPPER (hide native spinners) ───────── */
+input.hide-spinners::-webkit-inner-spin-button,
+input.hide-spinners::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.hide-spinners {
+  -moz-appearance: textfield;
+}
+
+/* ── MARCHING ANTS (upload dropzone hover) ───────── */
+@keyframes marching-ants {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+.marching-ants-rect {
+  animation: marching-ants 0.8s linear infinite;
+  animation-play-state: paused;
+}
+
+.group:hover .marching-ants-rect,
+.marching-active .marching-ants-rect {
+  animation-play-state: running;
+}
+
+/* ── SECTION FLASH OUTLINE (line-draw effect) ────── */
+
+/*
+ * A single keyframe animates all four 1-px gradient edges
+ * in sequence: top -> right -> bottom -> left, then fades out.
+ */
+@keyframes draw-border-lines {
+  0% {
+    background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
+    opacity: 1;
+  }
+  /* top edge drawn */
+  20% {
+    background-size: 100% 2px, 2px 0%, 0% 2px, 2px 0%;
+    opacity: 1;
+  }
+  /* right edge drawn */
+  40% {
+    background-size: 100% 2px, 2px 100%, 0% 2px, 2px 0%;
+    opacity: 1;
+  }
+  /* bottom edge drawn */
+  60% {
+    background-size: 100% 2px, 2px 100%, 100% 2px, 2px 0%;
+    opacity: 1;
+  }
+  /* left edge drawn — full rectangle */
+  75% {
+    background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+    opacity: 1;
+  }
+  /* hold briefly then fade */
+  85% {
+    background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+    opacity: 0.6;
+  }
+  100% {
+    background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+    opacity: 0;
+  }
+}
+
+.section-flash-outline {
+  position: relative;
+}
+
+.section-flash-outline::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 4px;
+  pointer-events: none;
+
+  background:
+    /* top    */ linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 90%, transparent), color-mix(in srgb, var(--color-accent-primary) 40%, transparent)) top left / 0% 2px no-repeat,
+    /* right  */ linear-gradient(180deg, color-mix(in srgb, var(--color-accent-primary) 80%, transparent), color-mix(in srgb, var(--color-accent-primary) 30%, transparent)) top right / 2px 0% no-repeat,
+    /* bottom */ linear-gradient(270deg, color-mix(in srgb, var(--color-accent-primary) 80%, transparent), color-mix(in srgb, var(--color-accent-primary) 30%, transparent)) bottom right / 0% 2px no-repeat,
+    /* left   */ linear-gradient(0deg, color-mix(in srgb, var(--color-accent-primary) 70%, transparent), color-mix(in srgb, var(--color-accent-primary) 25%, transparent)) bottom left / 2px 0% no-repeat;
+
+  animation: draw-border-lines 0.9s var(--ease-slam) forwards;
+}
+
 /* ── GLASS PANEL ──────────────────────────────────── */
 .glass-panel {
-  background: rgba(15, 15, 20, 0.85);
+  background: var(--bg-void-85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── REDUCED MOTION ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

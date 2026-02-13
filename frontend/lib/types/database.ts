@@ -16,19 +16,34 @@ export interface Database {
         Row: {
           id: string
           email: string | null
+          full_name: string | null
           credits: number
+          default_clip_padding: number
+          default_min_confidence: number
+          output_resolution: string
+          auto_retry: boolean
           created_at: string
         }
         Insert: {
           id: string
           email?: string | null
+          full_name?: string | null
           credits?: number
+          default_clip_padding?: number
+          default_min_confidence?: number
+          output_resolution?: string
+          auto_retry?: boolean
           created_at?: string
         }
         Update: {
           id?: string
           email?: string | null
+          full_name?: string | null
           credits?: number
+          default_clip_padding?: number
+          default_min_confidence?: number
+          output_resolution?: string
+          auto_retry?: boolean
           created_at?: string
         }
         Relationships: []
@@ -192,6 +207,7 @@ export type JobInsert = Database['public']['Tables']['jobs']['Insert']
 export type ClipInsert = Database['public']['Tables']['clips']['Insert']
 
 // Update types
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 export type VideoUpdate = Database['public']['Tables']['videos']['Update']
 export type JobUpdate = Database['public']['Tables']['jobs']['Update']
 

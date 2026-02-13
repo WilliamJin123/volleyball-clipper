@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface VideoPlayerModalProps {
   isOpen: boolean
@@ -22,6 +23,12 @@ export function VideoPlayerModal({
   onVideoLoaded,
 }: VideoPlayerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+  // Resolve portal target on mount (client-side only)
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -47,9 +54,9 @@ export function VideoPlayerModal({
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || !portalTarget) return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
       onClick={onClose}
@@ -61,7 +68,7 @@ export function VideoPlayerModal({
           background: 'rgba(6, 6, 10, 0.92)',
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
-          animation: 'fade-up 0.3s var(--ease-slam) both',
+          animation: 'modal-fade-in 0.3s var(--ease-slam) both',
         }}
       />
 
@@ -71,7 +78,7 @@ export function VideoPlayerModal({
         <div
           className="relative w-full max-w-4xl bg-bg-surface border border-border-dim rounded-sm overflow-hidden"
           style={{
-            animation: 'fade-up 0.4s var(--ease-slam) both',
+            animation: 'modal-slide-up 0.4s var(--ease-slam) both',
             animationDelay: '50ms',
           }}
           onClick={(e) => e.stopPropagation()}
@@ -136,6 +143,7 @@ export function VideoPlayerModal({
         )}
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   )
 }

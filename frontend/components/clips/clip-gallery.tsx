@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useClips } from '@/lib/hooks'
-import { useJobs } from '@/lib/hooks'
+import { useClips, useAnimatedList, useFlipAnimation } from '@/lib/hooks'
 import { NetDivider } from '@/components/ui/net-divider'
 import { ClipCard } from './clip-card'
 
@@ -14,7 +13,6 @@ const CLIPS_PER_PAGE = 12
 
 export function ClipGallery() {
   const { clips, loading, error } = useClips()
-  const { jobs } = useJobs()
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortNewest, setSortNewest] = useState(true)
@@ -22,6 +20,9 @@ export function ClipGallery() {
   const filtersRef = useRef<HTMLDivElement>(null)
   const [filterIndicator, setFilterIndicator] = useState({ left: 0, width: 0, ready: false })
   const [filterCanAnimate, setFilterCanAnimate] = useState(false)
+  const [sortTransition, setSortTransition] = useState(false)
+  const [filterFading, setFilterFading] = useState(false)
+  const [suppressAnim, setSuppressAnim] = useState(false)
 
   const measureFilter = useCallback(() => {
     const container = filtersRef.current
@@ -85,16 +86,28 @@ export function ClipGallery() {
     currentPage * CLIPS_PER_PAGE
   )
 
-  // Unique job count
-  const jobCount = useMemo(() => {
-    const uniqueJobIds = new Set(clips.map((c) => c.job_id))
-    return uniqueJobIds.size || jobs.length
-  }, [clips, jobs])
+  // Animated list for smooth enter/exit transitions during search
+  const animatedClips = useAnimatedList(paginatedClips, { exitDuration: 300, enterDuration: 300 })
 
-  // Reset page when filters change
+  // FLIP animation: smoothly reposition visible items when exiting items are removed
+  const gridContainerRef = useRef<HTMLDivElement>(null)
+  const visibleClipKeys = useMemo(
+    () => animatedClips.filter((a) => a.status === 'visible').map((a) => a.key),
+    [animatedClips]
+  )
+  useFlipAnimation(gridContainerRef, visibleClipKeys)
+
+  // Reset page when filters change — cross-fade to prevent double animation
   const handleFilterChange = (filter: FilterCategory) => {
-    setActiveFilter(filter)
-    setCurrentPage(1)
+    if (filter === activeFilter) return
+    setFilterFading(true)
+    setSuppressAnim(true)
+    setTimeout(() => {
+      setActiveFilter(filter)
+      setCurrentPage(1)
+      setTimeout(() => setFilterFading(false), 30)
+      setTimeout(() => setSuppressAnim(false), 350)
+    }, 120)
   }
 
   const handleSearchChange = (value: string) => {
@@ -120,7 +133,7 @@ export function ClipGallery() {
             ))}
           </div>
           <div className="flex gap-2">
-            <div className="h-8 w-[200px] bg-bg-raised rounded-sm animate-pulse" />
+            <div className="h-8 w-full sm:w-[200px] bg-bg-raised rounded-sm animate-pulse" />
             <div className="h-8 w-28 bg-bg-raised rounded-sm animate-pulse" />
           </div>
         </div>
@@ -148,7 +161,7 @@ export function ClipGallery() {
     return (
       <div>
         <div className="flex justify-between items-baseline mb-6">
-          <h1 className="font-display font-bold text-[1.5rem]">Your Clips</h1>
+          <h1 className="font-display font-bold text-xl sm:text-2xl">Your Clips</h1>
         </div>
         <NetDivider />
         <div className="flex flex-col items-center justify-center py-20">
@@ -164,7 +177,7 @@ export function ClipGallery() {
     return (
       <div>
         <div className="flex justify-between items-baseline mb-6">
-          <h1 className="font-display font-bold text-[1.5rem]">Your Clips</h1>
+          <h1 className="font-display font-bold text-xl sm:text-2xl">Your Clips</h1>
           <span className="font-mono text-[0.8125rem] text-text-dim">0 clips</span>
         </div>
         <NetDivider />
@@ -188,16 +201,16 @@ export function ClipGallery() {
     <div>
       {/* Page Header */}
       <div className="flex justify-between items-baseline mb-6">
-        <h1 className="font-display font-bold text-[1.5rem]">Your Clips</h1>
+        <h1 className="font-display font-bold text-xl sm:text-2xl">Your Clips</h1>
         <span className="font-mono text-[0.8125rem] text-text-dim">
-          {filteredClips.length} clip{filteredClips.length !== 1 ? 's' : ''} &middot; {jobCount} job{jobCount !== 1 ? 's' : ''}
+          {filteredClips.length} clip{filteredClips.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex justify-between flex-wrap gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-4 mb-6">
         {/* Left: Filter tabs */}
-        <div ref={filtersRef} className="relative flex">
+        <div ref={filtersRef} className="relative flex overflow-x-auto -mx-1 px-1">
           {FILTER_CATEGORIES.map((category) => (
             <button
               key={category}
@@ -226,7 +239,7 @@ export function ClipGallery() {
               left: `${filterIndicator.left}px`,
               width: `${filterIndicator.width}px`,
               opacity: filterIndicator.ready ? 1 : 0,
-              boxShadow: '0 0 8px rgba(255, 90, 31, 0.5)',
+              boxShadow: '0 0 8px var(--accent-primary-glow-50)',
             }}
           />
         </div>
@@ -238,17 +251,23 @@ export function ClipGallery() {
             placeholder="Search clips..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="font-mono text-xs px-3.5 py-1.5 rounded-sm border border-border-dim bg-bg-surface text-text-primary w-[200px] placeholder:text-text-dim outline-none transition-all duration-150 focus:border-border-bright"
+            className="font-mono text-xs px-3.5 py-1.5 rounded-sm border border-border-dim bg-bg-surface text-text-primary w-full sm:w-[200px] placeholder:text-text-dim outline-none transition-all duration-150 focus:border-border-bright"
             style={{ boxShadow: 'none' }}
             onFocus={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 8px rgba(255, 90, 31, 0.08)'
+              e.currentTarget.style.boxShadow = '0 0 8px var(--accent-primary-glow-08)'
             }}
             onBlur={(e) => {
               e.currentTarget.style.boxShadow = 'none'
             }}
           />
           <button
-            onClick={() => setSortNewest(!sortNewest)}
+            onClick={() => {
+              setSortTransition(true)
+              setTimeout(() => {
+                setSortNewest(!sortNewest)
+                setTimeout(() => setSortTransition(false), 50)
+              }, 150)
+            }}
             className="font-mono text-xs font-medium px-3.5 py-1.5 rounded-sm border border-border-dim text-text-secondary hover:border-border-bright hover:text-text-primary transition-all duration-150 cursor-pointer whitespace-nowrap"
           >
             SORT: {sortNewest ? 'NEWEST' : 'OLDEST'}
@@ -260,20 +279,42 @@ export function ClipGallery() {
 
       {/* Clip Grid */}
       <div
-        className="grid gap-5 mb-10"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+        className={`transition-opacity duration-[120ms] ease-in-out ${suppressAnim ? 'suppress-list-anim' : ''}`}
+        style={{ opacity: filterFading ? 0 : 1 }}
       >
-        {paginatedClips.map((clip, idx) => (
-          <ClipCard
-            key={clip.id}
-            clip={clip}
-            index={(currentPage - 1) * CLIPS_PER_PAGE + idx + 1}
-          />
+      <div
+        ref={gridContainerRef}
+        className="grid gap-5 mb-10 transition-[opacity,transform] duration-200"
+        style={{
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          opacity: sortTransition ? 0 : 1,
+          transform: sortTransition ? 'translateY(6px)' : 'translateY(0)',
+        }}
+      >
+        {animatedClips.map(({ item: clip, status, key }) => (
+          <div
+            key={key}
+            data-flip-key={status === 'visible' ? key : undefined}
+            className={
+              status === 'exiting'
+                ? 'list-item-exiting'
+                : status === 'entering'
+                  ? 'list-item-entering'
+                  : ''
+            }
+          >
+            <ClipCard
+              clip={clip}
+              index={paginatedClips.indexOf(clip) !== -1
+                ? (currentPage - 1) * CLIPS_PER_PAGE + paginatedClips.indexOf(clip) + 1
+                : 0}
+            />
+          </div>
         ))}
       </div>
 
       {/* No results for filter */}
-      {filteredClips.length === 0 && (
+      {filteredClips.length === 0 && animatedClips.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 mb-10">
           <p className="font-mono text-sm text-text-dim mb-2">[NO MATCHES]</p>
           <p className="font-body text-text-secondary text-sm">
@@ -320,6 +361,7 @@ export function ClipGallery() {
           </button>
         </div>
       )}
+      </div>
     </div>
   )
 }
