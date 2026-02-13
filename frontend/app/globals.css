@@ -17,9 +17,9 @@
   --color-accent-warning: #F59E0B;
   --color-accent-error: #EF4444;
 
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-display: var(--next-font-display, 'Space Grotesk', system-ui, sans-serif);
+  --font-body: var(--next-font-body, 'Inter', system-ui, sans-serif);
+  --font-mono: var(--next-font-mono, 'JetBrains Mono', 'Fira Code', monospace);
 
   --ease-slam: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-snap: cubic-bezier(0, 0, 0.2, 1);
@@ -387,6 +387,20 @@ input.hide-spinners {
 }
 
 /* ── REDUCED MOTION ──────────────────────────────── */
+/* ── Dashboard CTA hover glows (pure CSS, no JS handlers) ── */
+.dashboard-cta-primary {
+  box-shadow: 0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08);
+}
+.dashboard-cta-primary:hover {
+  box-shadow: 0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12);
+}
+.dashboard-cta-secondary {
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.08);
+}
+.dashboard-cta-secondary:hover {
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.15);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

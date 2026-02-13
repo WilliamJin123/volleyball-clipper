@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { Sidebar } from '@/components/layout'
 import { StatsCards } from '@/components/dashboard/stats-cards'
@@ -23,41 +21,18 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/upload"
-              className="inline-flex items-center px-6 py-2.5 rounded-sm
+              className="dashboard-cta-primary inline-flex items-center px-6 py-2.5 rounded-sm
                 bg-accent-primary text-white font-display font-semibold text-sm
                 transition-all duration-200 hover:-translate-y-px"
-              style={{
-                boxShadow:
-                  '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  '0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow =
-                  '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)'
-              }}
             >
               Upload Video
             </Link>
             <Link
               href="/jobs/new"
-              className="inline-flex items-center px-6 py-2.5 rounded-sm
+              className="dashboard-cta-secondary inline-flex items-center px-6 py-2.5 rounded-sm
                 bg-transparent text-accent-secondary border border-accent-secondary
                 font-display font-semibold text-sm
                 transition-all duration-200 hover:-translate-y-px hover:bg-accent-secondary/5"
-              style={{
-                boxShadow: '0 0 16px rgba(59, 130, 246, 0.08)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  '0 0 24px rgba(59, 130, 246, 0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow =
-                  '0 0 16px rgba(59, 130, 246, 0.08)'
-              }}
             >
               Create Job
             </Link>

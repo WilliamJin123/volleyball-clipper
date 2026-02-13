@@ -14,13 +14,22 @@ export function NetDivider({ className = '' }: NetDividerProps) {
   const ripplingRef = useRef(false)
   const leftPoleRef = useRef<HTMLDivElement>(null)
   const rightPoleRef = useRef<HTMLDivElement>(null)
+  const charsRef = useRef<NodeListOf<HTMLSpanElement> | null>(null)
+
+  // Cache char elements after first render
+  useEffect(() => {
+    if (ref.current) {
+      charsRef.current = ref.current.querySelectorAll<HTMLSpanElement>('.net-char')
+    }
+  }, [])
 
   const ripple = useCallback((originIdx?: number) => {
     const el = ref.current
     if (!el || ripplingRef.current) return
     ripplingRef.current = true
 
-    const chars = el.querySelectorAll<HTMLSpanElement>('.net-char')
+    const chars = charsRef.current
+    if (!chars || chars.length === 0) return
     const center = originIdx ?? Math.floor(chars.length / 2)
 
     chars.forEach((ch, i) => {
@@ -67,10 +76,8 @@ export function NetDivider({ className = '' }: NetDividerProps) {
   }, [])
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current
-    if (!el) return
-    const chars = el.querySelectorAll<HTMLSpanElement>('.net-char')
-    if (chars.length === 0) return
+    const chars = charsRef.current
+    if (!chars || chars.length === 0) return
     const firstRect = chars[0].getBoundingClientRect()
     const lastRect = chars[chars.length - 1].getBoundingClientRect()
     const textLeft = firstRect.left

@@ -83,28 +83,41 @@ export function ScoreBug() {
     el.setPointerCapture(e.pointerId)
   }, [position])
 
+  const rafRef = useRef<number | null>(null)
+
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging) return
 
-    const newX = e.clientX - dragOffset.current.x
-    const newY = e.clientY - dragOffset.current.y
+    const clientX = e.clientX
+    const clientY = e.clientY
 
-    // Clamp to viewport bounds
-    const el = containerRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const maxX = window.innerWidth - rect.width
-    const maxY = window.innerHeight - rect.height
+    if (rafRef.current !== null) return
 
-    setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      const newX = clientX - dragOffset.current.x
+      const newY = clientY - dragOffset.current.y
+
+      const el = containerRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const maxX = window.innerWidth - rect.width
+      const maxY = window.innerHeight - rect.height
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      })
     })
   }, [isDragging])
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging) return
     setIsDragging(false)
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
     const el = containerRef.current
     if (el) {
       el.releasePointerCapture(e.pointerId)
