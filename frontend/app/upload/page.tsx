@@ -301,33 +301,30 @@ function VideoRow({
         </div>
       )}
 
-      {/* Confirm Delete - inline below the row */}
+      {/* Confirm Delete - modal popup */}
       {showDeleteConfirm && (
-        <div className="mt-1.5 mb-1.5">
-          <ConfirmDelete
-            actionLabel={`DELETE VIDEO: "${video.filename}"`}
-            currentState={{
-              label: 'CURRENT STATE',
-              items: [
-                `Status: ${video.status}`,
-                'Stored in R2',
-                video.twelvelabs_video_id ? 'Indexed in TwelveLabs' : 'Not indexed',
-              ],
-            }}
-            afterDelete={{
-              label: 'AFTER DELETE',
-              items: [
-                'Video removed',
-                'R2 file deleted',
-                'Irreversible',
-              ],
-            }}
-            countdownSeconds={3}
-            onConfirm={onDelete}
-            onCancel={onCancelDelete}
-            isDeleting={isDeleting}
-          />
-        </div>
+        <ConfirmDelete
+          actionLabel={`DELETE VIDEO: "${video.filename}"`}
+          currentState={{
+            label: 'CURRENT STATE',
+            items: [
+              `Status: ${video.status}`,
+              'Stored in R2',
+              video.twelvelabs_video_id ? 'Indexed in TwelveLabs' : 'Not indexed',
+            ],
+          }}
+          afterDelete={{
+            label: 'AFTER DELETE',
+            items: [
+              'Video removed',
+              'R2 file deleted',
+              'Irreversible',
+            ],
+          }}
+          onConfirm={onDelete}
+          onCancel={onCancelDelete}
+          isDeleting={isDeleting}
+        />
       )}
     </div>
   )

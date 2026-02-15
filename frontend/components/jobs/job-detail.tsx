@@ -8,7 +8,6 @@ import { useJob } from '@/lib/hooks'
 import { createClient } from '@/lib/supabase/client'
 import { FusedBar } from '@/components/ui/fused-bar'
 import { NetDivider } from '@/components/ui/net-divider'
-import { ConfirmDelete } from '@/components/ui/confirm-delete'
 import { ClipCard } from '@/components/clips/clip-card'
 import { StreamingTerminal } from '@/components/ui/streaming-terminal'
 import type { TerminalLine } from '@/components/ui/streaming-terminal'
@@ -178,11 +177,33 @@ function CompletedTerminalLog({ lines }: { lines: TerminalLine[] }) {
 
 export function JobDetail({ jobId }: JobDetailProps) {
   const { job, loading, error } = useJob(jobId)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [terminalSkipped, setTerminalSkipped] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const handleCancelJob = useCallback(async () => {
+    if (!job || isCancelling) return
+    setIsCancelling(true)
+    try {
+      // Delete any partial clips created during processing
+      const { error: clipsError } = await supabase
+        .from('clips')
+        .delete()
+        .eq('job_id', job.id)
+      if (clipsError) throw clipsError
+
+      // Mark job as failed (cancelled)
+      const { error: jobError } = await supabase
+        .from('jobs')
+        .update({ status: 'failed' as const })
+        .eq('id', job.id)
+      if (jobError) throw jobError
+    } catch (err) {
+      console.error('Failed to cancel job:', err)
+      setIsCancelling(false)
+    }
+  }, [job, isCancelling, supabase])
 
   // Build terminal lines from current job state
   const terminalLines = useMemo(() => {
@@ -200,32 +221,6 @@ export function JobDetail({ jobId }: JobDetailProps) {
       wasProcessingRef.current = true
     }
   }, [terminalActive])
-
-  const handleDeleteJob = useCallback(async () => {
-    if (!job) return
-    setIsDeleting(true)
-    try {
-      // Delete clips first (foreign key constraint)
-      const { error: clipsError } = await supabase
-        .from('clips')
-        .delete()
-        .eq('job_id', job.id)
-      if (clipsError) throw clipsError
-
-      // Delete the job
-      const { error: jobError } = await supabase
-        .from('jobs')
-        .delete()
-        .eq('id', job.id)
-      if (jobError) throw jobError
-
-      // Navigate back to jobs list
-      router.push('/jobs')
-    } catch (err) {
-      console.error('Failed to delete job:', err)
-      setIsDeleting(false)
-    }
-  }, [job, supabase, router])
 
   if (loading) {
     return <JobDetailLoadingDemo />
@@ -273,18 +268,19 @@ export function JobDetail({ jobId }: JobDetailProps) {
             {relativeTime(job.created_at)} -- {formatDate(job.created_at)}
           </p>
         </div>
-        {/* Delete button - only show for completed or failed jobs, not while processing */}
-        {!isProcessing && !showDeleteConfirm && (
+        {isProcessing && (
           <button
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={handleCancelJob}
+            disabled={isCancelling}
             className="flex-shrink-0 px-3.5 py-2 rounded-sm
               bg-transparent text-accent-error/70 border border-accent-error/20
               font-mono text-xs font-medium
               transition-all duration-150
               hover:text-accent-error hover:border-accent-error/40 hover:bg-accent-error/5
+              disabled:opacity-40 disabled:cursor-not-allowed
               cursor-pointer"
           >
-            Delete Job
+            {isCancelling ? 'Cancelling...' : 'Cancel Job'}
           </button>
         )}
       </div>
@@ -331,35 +327,6 @@ export function JobDetail({ jobId }: JobDetailProps) {
           </div>
         </div>
       </div>
-
-      {/* Confirm Delete */}
-      {showDeleteConfirm && (
-        <div className="mb-6">
-          <ConfirmDelete
-            actionLabel={`DELETE JOB: "${job.videos?.filename || 'Untitled Job'}"`}
-            currentState={{
-              label: 'CURRENT STATE',
-              items: [
-                `${clipCount} clip${clipCount !== 1 ? 's' : ''} generated`,
-                `Query: "${job.query}"`,
-                `Status: ${job.status}`,
-              ],
-            }}
-            afterDelete={{
-              label: 'AFTER DELETE',
-              items: [
-                `${clipCount} clip${clipCount !== 1 ? 's' : ''} removed`,
-                'R2 files deleted',
-                'Irreversible',
-              ],
-            }}
-            countdownSeconds={5}
-            onConfirm={handleDeleteJob}
-            onCancel={() => setShowDeleteConfirm(false)}
-            isDeleting={isDeleting}
-          />
-        </div>
-      )}
 
       {/* Processing State -- Streaming Terminal Log */}
       {isProcessing && (

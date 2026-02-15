@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { StatusBadge } from '@/components/ui/status-badge'
 import type { Clip, Job } from '@/lib/types/database'
@@ -12,6 +12,7 @@ interface ClipWithOptionalJob extends Clip {
 interface ClipCardProps {
   clip: ClipWithOptionalJob
   index: number
+  onDelete?: (clipId: string) => void
 }
 
 function formatDuration(seconds: number): string {
@@ -27,10 +28,12 @@ function formatTimestamp(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-export function ClipCard({ clip, index }: ClipCardProps) {
+export function ClipCard({ clip, index, onDelete }: ClipCardProps) {
   const [imgError, setImgError] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const [playing, setPlaying] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const duration = clip.end_time - clip.start_time
   const isProcessing = clip.jobs?.status === 'processing'
@@ -39,8 +42,20 @@ export function ClipCard({ clip, index }: ClipCardProps) {
     ? `${clip.jobs.query} #${index}`
     : `Clip #${index}`
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
   const handleClick = () => {
-    if (isProcessing || !clip.public_url) return
+    if (isProcessing || !clip.public_url || menuOpen) return
     if (!playing) {
       setPlaying(true)
     }
@@ -166,9 +181,48 @@ export function ClipCard({ clip, index }: ClipCardProps) {
 
       {/* Meta */}
       <div className="px-4 py-3.5">
-        <h3 className="font-display text-[0.9375rem] font-semibold mb-2 truncate">
-          {title}
-        </h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-display text-[0.9375rem] font-semibold truncate flex-1 mr-2">
+            {title}
+          </h3>
+          {onDelete && !isProcessing && (
+            <div className="relative" ref={menuRef}>
+              <button
+                className="flex flex-col items-center gap-[3px] text-text-dim px-1.5 py-1 rounded-sm transition-colors duration-150 hover:text-text-primary hover:bg-white/[0.04] cursor-pointer"
+                aria-label="Clip actions"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setMenuOpen(!menuOpen)
+                }}
+              >
+                <span className="block w-[3px] h-[3px] rounded-full bg-current" />
+                <span className="block w-[3px] h-[3px] rounded-full bg-current" />
+                <span className="block w-[3px] h-[3px] rounded-full bg-current" />
+              </button>
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 z-20
+                    bg-bg-surface border border-border-dim rounded-sm
+                    shadow-[0_4px_24px_rgba(0,0,0,0.4)] min-w-[140px]"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpen(false)
+                      onDelete(clip.id)
+                    }}
+                    className="w-full text-left px-3.5 py-2
+                      font-mono text-xs text-accent-error
+                      hover:bg-accent-error/5 transition-colors duration-150
+                      cursor-pointer"
+                  >
+                    Delete Clip
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <div className="flex justify-between items-center">
           <span className="font-mono text-[0.6875rem] text-text-dim">
             {formatTimestamp(clip.start_time)} – {formatTimestamp(clip.end_time)}

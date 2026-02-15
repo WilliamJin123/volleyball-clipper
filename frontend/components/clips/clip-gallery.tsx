@@ -3,7 +3,9 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useClips, useAnimatedList, useFlipAnimation } from '@/lib/hooks'
+import { createClient } from '@/lib/supabase/client'
 import { NetDivider } from '@/components/ui/net-divider'
+import { ConfirmDelete } from '@/components/ui/confirm-delete'
 import { ClipCard } from './clip-card'
 
 const FILTER_CATEGORIES = ['All', 'Kills', 'Blocks', 'Serves', 'Digs'] as const
@@ -12,7 +14,8 @@ type FilterCategory = (typeof FILTER_CATEGORIES)[number]
 const CLIPS_PER_PAGE = 12
 
 export function ClipGallery() {
-  const { clips, loading, error } = useClips()
+  const { clips, loading, error, refetch } = useClips()
+  const supabase = createClient()
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortNewest, setSortNewest] = useState(true)
@@ -23,6 +26,31 @@ export function ClipGallery() {
   const [sortTransition, setSortTransition] = useState(false)
   const [filterFading, setFilterFading] = useState(false)
   const [suppressAnim, setSuppressAnim] = useState(false)
+  const [deleteClipId, setDeleteClipId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const deleteTargetClip = useMemo(
+    () => clips.find((c) => c.id === deleteClipId),
+    [clips, deleteClipId]
+  )
+
+  const handleDeleteClip = useCallback(async () => {
+    if (!deleteClipId) return
+    setIsDeleting(true)
+    try {
+      const { error: deleteError } = await supabase
+        .from('clips')
+        .delete()
+        .eq('id', deleteClipId)
+      if (deleteError) throw deleteError
+      setDeleteClipId(null)
+      refetch()
+    } catch (err) {
+      console.error('Failed to delete clip:', err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [deleteClipId, supabase, refetch])
 
   const measureFilter = useCallback(() => {
     const container = filtersRef.current
@@ -308,6 +336,7 @@ export function ClipGallery() {
               index={paginatedClips.indexOf(clip) !== -1
                 ? (currentPage - 1) * CLIPS_PER_PAGE + paginatedClips.indexOf(clip) + 1
                 : 0}
+              onDelete={(clipId) => setDeleteClipId(clipId)}
             />
           </div>
         ))}
@@ -362,6 +391,32 @@ export function ClipGallery() {
         </div>
       )}
       </div>
+
+      {/* Delete clip confirmation modal */}
+      {deleteClipId && deleteTargetClip && (
+        <ConfirmDelete
+          actionLabel={`DELETE CLIP: "${deleteTargetClip.jobs?.query || 'Clip'} #${clips.indexOf(deleteTargetClip) + 1}"`}
+          currentState={{
+            label: 'CURRENT STATE',
+            items: [
+              `Duration: ${(deleteTargetClip.end_time - deleteTargetClip.start_time).toFixed(1)}s`,
+              deleteTargetClip.public_url ? 'Stored in R2' : 'No file',
+              `Job: ${deleteTargetClip.jobs?.query || 'Unknown'}`,
+            ],
+          }}
+          afterDelete={{
+            label: 'AFTER DELETE',
+            items: [
+              'Clip removed',
+              'R2 file remains',
+              'Irreversible',
+            ],
+          }}
+          onConfirm={handleDeleteClip}
+          onCancel={() => setDeleteClipId(null)}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   )
 }

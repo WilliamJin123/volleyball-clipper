@@ -54,7 +54,6 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [isEmailVerified, setIsEmailVerified] = useState(false)
-  const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Preferences state (persisted to profiles table)
@@ -62,7 +61,6 @@ export default function SettingsPage() {
   const [minConfidence, setMinConfidence] = useState('0.60')
   const [outputResolution, setOutputResolution] = useState('720p')
   const [autoRetry, setAutoRetry] = useState(false)
-  const [prefsSaving, setPrefsSaving] = useState(false)
   const [prefsMessage, setPrefsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Auto-save state
@@ -239,36 +237,11 @@ export default function SettingsPage() {
     }
   }, [clipPadding, minConfidence, outputResolution, autoRetry, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Save profile (auth metadata + profiles table)
-  const handleSaveProfile = async () => {
-    if (!user) return
-    setProfileSaving(true)
-    setProfileMessage(null)
-    try {
-      // Update auth metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: displayName },
-      })
-      if (authError) throw authError
+  // Unified save: profile + preferences
+  const [savingAll, setSavingAll] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-      // Also persist full_name to the profiles table
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .update({ full_name: displayName })
-        .eq('id', user.id)
-      if (dbError) throw dbError
-
-      setProfileMessage({ type: 'success', text: 'Profile updated successfully.' })
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update profile.'
-      setProfileMessage({ type: 'error', text: message })
-    } finally {
-      setProfileSaving(false)
-    }
-  }
-
-  // Save preferences to the profiles table (manual save also cancels pending auto-save)
-  const handleSavePreferences = async () => {
+  const handleSaveAll = async () => {
     if (!user) return
     // Cancel pending auto-save
     if (autoSaveTimerRef.current) {
@@ -276,26 +249,37 @@ export default function SettingsPage() {
       autoSaveTimerRef.current = null
     }
     setAutoSaveStatus('idle')
-    setPrefsSaving(true)
+    setSavingAll(true)
+    setSaveMessage(null)
+    setProfileMessage(null)
     setPrefsMessage(null)
     try {
-      const { error } = await supabase
+      // Save profile (auth metadata)
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: displayName },
+      })
+      if (authError) throw authError
+
+      // Save profile + preferences to profiles table
+      const { error: dbError } = await supabase
         .from('profiles')
         .update({
+          full_name: displayName,
           default_clip_padding: parseFloat(clipPadding) || 2,
           default_min_confidence: parseFloat(minConfidence) || 0.60,
           output_resolution: outputResolution,
           auto_retry: autoRetry,
         })
         .eq('id', user.id)
+      if (dbError) throw dbError
 
-      if (error) throw error
-      setPrefsMessage({ type: 'success', text: 'Preferences saved.' })
+      setSaveMessage({ type: 'success', text: 'All changes saved.' })
+      setTimeout(() => setSaveMessage(null), 3000)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save preferences.'
-      setPrefsMessage({ type: 'error', text: message })
+      const message = err instanceof Error ? err.message : 'Failed to save.'
+      setSaveMessage({ type: 'error', text: message })
     } finally {
-      setPrefsSaving(false)
+      setSavingAll(false)
     }
   }
 
@@ -317,7 +301,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <main className="md:ml-[60px] max-w-[1000px] 2xl:max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-12 pb-24">
+      <main className="md:ml-[60px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-12 pb-24">
         {/* Page Header — sticky on desktop */}
         <div className="mb-8 animate-in md:sticky md:top-0 md:z-30 md:bg-bg-void md:pt-4 md:pb-3">
           <h1 className="font-display font-bold text-xl sm:text-2xl text-text-primary">
@@ -469,6 +453,55 @@ export default function SettingsPage() {
                 </button>
               )
             })}
+
+            {/* Save button */}
+            <div className="mt-4 px-1">
+              <button
+                onClick={handleSaveAll}
+                disabled={savingAll}
+                className="w-full px-4 py-2.5 rounded-sm
+                  bg-accent-primary text-white font-display font-semibold text-sm
+                  transition-all duration-200 hover:-translate-y-px
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
+                  cursor-pointer"
+                style={{
+                  boxShadow: '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!savingAll)
+                    e.currentTarget.style.boxShadow =
+                      '0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)'
+                }}
+              >
+                {savingAll ? 'Saving...' : 'Save Changes'}
+              </button>
+              {/* Auto-save / save status */}
+              <div className="h-5 mt-1.5 px-1">
+                {saveMessage ? (
+                  <span
+                    className={`font-mono text-[0.625rem] uppercase tracking-widest ${
+                      saveMessage.type === 'success' ? 'text-accent-success' : 'text-accent-error'
+                    }`}
+                  >
+                    {saveMessage.text}
+                  </span>
+                ) : autoSaveStatus !== 'idle' ? (
+                  <span
+                    className={`font-mono text-[0.625rem] uppercase tracking-widest transition-opacity duration-300 ${
+                      autoSaveStatus === 'saved' ? 'text-accent-success' : 'text-text-dim'
+                    }`}
+                  >
+                    {autoSaveStatus === 'pending' && 'Unsaved changes...'}
+                    {autoSaveStatus === 'saving' && 'Auto-saving...'}
+                    {autoSaveStatus === 'saved' && 'Auto-saved'}
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </nav>
 
           {/* Content */}
@@ -558,7 +591,7 @@ export default function SettingsPage() {
               {/* Profile message */}
               {profileMessage && (
                 <div
-                  className={`mb-4 font-mono text-xs px-3 py-2 rounded-sm border ${
+                  className={`font-mono text-xs px-3 py-2 rounded-sm border ${
                     profileMessage.type === 'success'
                       ? 'text-accent-success bg-accent-success/5 border-accent-success/20'
                       : 'text-accent-error bg-accent-error/5 border-accent-error/20'
@@ -567,31 +600,6 @@ export default function SettingsPage() {
                   {profileMessage.text}
                 </div>
               )}
-
-              {/* Save Profile Button */}
-              <button
-                onClick={handleSaveProfile}
-                disabled={profileSaving}
-                className="inline-flex items-center px-6 py-2.5 rounded-sm
-                  bg-accent-primary text-white font-display font-semibold text-sm
-                  transition-all duration-200 hover:-translate-y-px
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
-                  cursor-pointer"
-                style={{
-                  boxShadow: '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!profileSaving)
-                    e.currentTarget.style.boxShadow =
-                      '0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow =
-                    '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)'
-                }}
-              >
-                {profileSaving ? 'Saving...' : 'Save Changes'}
-              </button>
             </section>
 
             <NetDivider />
@@ -730,22 +738,9 @@ export default function SettingsPage() {
               id="preferences"
               className={`scroll-mt-24${flashingSection === 'preferences' ? ' section-flash-outline' : ''}`}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-display font-bold text-[1.125rem] text-text-primary">
-                  Preferences
-                </h2>
-                {autoSaveStatus !== 'idle' && (
-                  <span
-                    className={`font-mono text-[0.625rem] uppercase tracking-widest transition-opacity duration-300 ${
-                      autoSaveStatus === 'saved' ? 'text-accent-success' : 'text-text-dim'
-                    }`}
-                  >
-                    {autoSaveStatus === 'pending' && 'Unsaved changes...'}
-                    {autoSaveStatus === 'saving' && 'Saving...'}
-                    {autoSaveStatus === 'saved' && 'Auto-saved'}
-                  </span>
-                )}
-              </div>
+              <h2 className="font-display font-bold text-[1.125rem] text-text-primary mb-6">
+                Preferences
+              </h2>
 
               {/* Default Clip Padding */}
               <div className="mb-5">
@@ -944,7 +939,7 @@ export default function SettingsPage() {
               {/* Preferences message */}
               {prefsMessage && (
                 <div
-                  className={`mb-4 font-mono text-xs px-3 py-2 rounded-sm border ${
+                  className={`font-mono text-xs px-3 py-2 rounded-sm border ${
                     prefsMessage.type === 'success'
                       ? 'text-accent-success bg-accent-success/5 border-accent-success/20'
                       : 'text-accent-error bg-accent-error/5 border-accent-error/20'
@@ -953,31 +948,6 @@ export default function SettingsPage() {
                   {prefsMessage.text}
                 </div>
               )}
-
-              {/* Save Preferences Button */}
-              <button
-                onClick={handleSavePreferences}
-                disabled={prefsSaving}
-                className="inline-flex items-center px-6 py-2.5 rounded-sm
-                  bg-accent-primary text-white font-display font-semibold text-sm
-                  transition-all duration-200 hover:-translate-y-px
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
-                  cursor-pointer"
-                style={{
-                  boxShadow: '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!prefsSaving)
-                    e.currentTarget.style.boxShadow =
-                      '0 0 28px var(--accent-primary-glow-25), 0 0 56px var(--accent-primary-glow-12)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow =
-                    '0 0 20px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow-08)'
-                }}
-              >
-                {prefsSaving ? 'Saving...' : 'Save Preferences'}
-              </button>
             </section>
 
             <NetDivider />
@@ -1105,7 +1075,6 @@ export default function SettingsPage() {
                       'Irreversible',
                     ],
                   }}
-                  countdownSeconds={5}
                   onConfirm={handleDeleteAccount}
                   onCancel={() => setShowDeleteConfirm(false)}
                   isDeleting={isDeleting}
