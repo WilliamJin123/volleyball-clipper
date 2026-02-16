@@ -266,7 +266,7 @@ a {
   animation: ticker-scroll var(--ticker-speed, 12s) linear infinite;
 }
 .ticker-container:hover .ticker-strip {
-  --ticker-speed: 40s;
+  animation-play-state: paused;
 }
 
 /* ── SCROLLBAR HIDE ──────────────────────────────── */

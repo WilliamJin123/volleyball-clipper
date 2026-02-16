@@ -423,7 +423,7 @@ export default function SettingsPage() {
           {/* Desktop Fixed Sidebar Navigation */}
           <nav
             ref={(el) => { navContainerRef.current = el }}
-            className="hidden md:flex md:flex-col gap-0.5 md:fixed md:top-[120px] md:w-[192px]"
+            className="hidden md:flex md:flex-col gap-0.5 md:fixed md:top-[140px] md:w-[192px]"
             style={navLeft !== null ? { left: navLeft } : undefined}
           >
             {sidebarItems.map((item) => {

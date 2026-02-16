@@ -4,6 +4,7 @@ import Script from "next/script";
 import { AuthProvider } from "@/lib/context/auth-context";
 import { ThemeProvider } from "@/lib/context/theme-context";
 import { AppShell } from "@/components/layout/app-shell";
+import { DitheredBackground } from "@/components/dithered-background/dithered-background";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({
         <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body className="bg-bg-void text-text-primary font-body antialiased">
+        <DitheredBackground />
         <ThemeProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>
