@@ -68,7 +68,7 @@ function LoginForm() {
         <div
           className="border border-border-dim rounded-sm p-6 sm:p-8 md:p-10"
           style={{
-            background: 'var(--bg-void-92)',
+            background: 'var(--bg-void-70)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
           }}

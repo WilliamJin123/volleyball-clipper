@@ -181,6 +181,15 @@ export function applyThemeColors(colors: ThemeColors) {
   root.style.setProperty('--accent-error-glow-12', deriveGlow(colors['accent-error'], 0.12))
   root.style.setProperty('--accent-error-glow-15', deriveGlow(colors['accent-error'], 0.15))
   root.style.setProperty('--accent-error-glow-30', deriveGlow(colors['accent-error'], 0.30))
+  // Glass surfaces — theme-aware transparent bg-surface / bg-raised
+  root.style.setProperty('--bg-surface-glass', deriveGlow(colors['bg-surface'], 0.55))
+  root.style.setProperty('--bg-raised-glass', deriveGlow(colors['bg-raised'], 0.50))
+  // Dither invert — flip dither dots to dark on light themes
+  const voidR = parseInt(colors['bg-void'].slice(1, 3), 16)
+  const voidG = parseInt(colors['bg-void'].slice(3, 5), 16)
+  const voidB = parseInt(colors['bg-void'].slice(5, 7), 16)
+  const lum = (voidR * 0.299 + voidG * 0.587 + voidB * 0.114) / 255
+  root.style.setProperty('--dither-invert', lum > 0.5 ? '1' : '0')
 }
 
 // ── Storage key ────────────────────────────────────

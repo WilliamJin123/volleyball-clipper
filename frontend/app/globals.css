@@ -51,6 +51,10 @@
   --accent-error-glow-12: rgba(239, 68, 68, 0.12);
   --accent-error-glow-15: rgba(239, 68, 68, 0.15);
   --accent-error-glow-30: rgba(239, 68, 68, 0.30);
+  /* Glass surface defaults (obsidian) — overridden per-theme by JS */
+  --bg-surface-glass: rgba(15, 15, 20, 0.55);
+  --bg-raised-glass: rgba(22, 22, 29, 0.50);
+  --dither-invert: 0;
 }
 
 /* ── RESET / BASE ──────────────────────────────────── */
@@ -407,11 +411,37 @@ input.hide-spinners {
   animation: draw-border-lines 0.9s var(--ease-slam) forwards;
 }
 
-/* ── GLASS PANEL ──────────────────────────────────── */
-.glass-panel {
-  background: var(--bg-void-85);
+/* ── GLASS SURFACES ──────────────────────────────── */
+/* Theme-aware transparent backgrounds via derived CSS vars.
+   Unlayered CSS beats @layer utilities in the cascade. */
+.bg-bg-surface {
+  background-color: var(--bg-surface-glass);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+.bg-bg-raised {
+  background-color: var(--bg-raised-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Reduce blur on mobile — backdrop-filter is GPU-heavy on mid-tier devices */
+@media (max-width: 767px) {
+  .bg-bg-surface,
+  .bg-bg-raised {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .glass-panel {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+.glass-panel {
+  background: var(--bg-void-70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ── REDUCED MOTION ──────────────────────────────── */
@@ -435,5 +465,14 @@ input.hide-spinners {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── MOBILE PERFORMANCE ─────────────────────────── */
+/* content-visibility skips rendering for offscreen elements */
+@media (max-width: 767px) {
+  .animate-in {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
   }
 }

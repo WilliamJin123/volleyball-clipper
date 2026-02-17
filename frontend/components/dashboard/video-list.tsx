@@ -77,9 +77,10 @@ function InlineClipCard({ clip }: { clip: ClipWithJob }) {
             <video
               ref={videoRef}
               src={clip.public_url}
-              className="w-full h-full"
+              className="w-full h-full object-contain"
               controls
               autoPlay
+              playsInline
               preload="auto"
               onEnded={() => setPlaying(false)}
             />
@@ -105,6 +106,7 @@ function InlineClipCard({ clip }: { clip: ClipWithJob }) {
                 src={clip.public_url}
                 className="w-full h-full object-cover"
                 muted
+                playsInline
                 preload="metadata"
               />
             ) : (

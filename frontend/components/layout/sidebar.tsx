@@ -173,7 +173,7 @@ export function Sidebar() {
           border border-border-dim cursor-pointer
           transition-colors duration-150 hover:bg-white/[0.04]"
         style={{
-          background: 'var(--bg-void-95)',
+          background: 'var(--bg-void-75)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
         }}
@@ -202,9 +202,9 @@ export function Sidebar() {
           ${mobileOpen ? 'translate-x-0 w-[200px]' : '-translate-x-full md:translate-x-0'}
         `}
         style={{
-          background: 'var(--bg-void-95)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: 'var(--bg-void-50)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
         }}
         onClick={handleSidebarClick}
       >

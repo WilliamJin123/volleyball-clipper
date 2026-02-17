@@ -179,7 +179,7 @@ export function CreateJobForm({
               Video
             </label>
             {videosLoading ? (
-              <div className="h-10 bg-bg-void border border-border-dim rounded-sm animate-pulse" />
+              <div className="h-10 bg-bg-void/80 border border-border-dim rounded-sm animate-pulse" />
             ) : readyVideos.length === 0 ? (
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs text-text-dim">No videos ready.</span>
@@ -196,7 +196,7 @@ export function CreateJobForm({
                 id="video-select"
                 value={selectedVideoId}
                 onChange={(e) => setSelectedVideoId(e.target.value)}
-                className="w-full h-10 px-3 bg-bg-void border border-border-dim rounded-sm
+                className="w-full h-10 px-3 bg-bg-void/80 border border-border-dim rounded-sm
                   font-mono text-[0.8125rem] text-text-primary
                   focus:border-accent-primary focus:outline-none
                   transition-colors duration-150 cursor-pointer appearance-none"
@@ -230,7 +230,7 @@ export function CreateJobForm({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Describe the moments to find..."
               required
-              className="w-full min-h-20 px-3 py-2.5 bg-bg-void border border-border-dim rounded-sm
+              className="w-full min-h-20 px-3 py-2.5 bg-bg-void/80 border border-border-dim rounded-sm
                 font-mono text-[0.8125rem] text-text-primary placeholder:text-text-dim/50
                 focus:border-accent-primary focus:outline-none
                 transition-colors duration-150 resize-y"
@@ -267,7 +267,7 @@ export function CreateJobForm({
                   min={0}
                   max={10}
                   step={0.5}
-                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void border-y border-border-dim
+                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void/80 border-y border-border-dim
                     font-mono text-[0.8125rem] text-text-primary text-center
                     focus:border-accent-primary focus:outline-none
                     transition-colors duration-150"
@@ -314,7 +314,7 @@ export function CreateJobForm({
                   min={0}
                   max={1}
                   step={0.05}
-                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void border-y border-border-dim
+                  className="hide-spinners flex-1 h-10 px-2 bg-bg-void/80 border-y border-border-dim
                     font-mono text-[0.8125rem] text-text-primary text-center
                     focus:border-accent-primary focus:outline-none
                     transition-colors duration-150"

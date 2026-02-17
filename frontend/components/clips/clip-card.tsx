@@ -109,7 +109,7 @@ export function ClipCard({ clip, index, onDelete }: ClipCardProps) {
             <video
               ref={videoRef}
               src={clip.public_url}
-              className="w-full h-full"
+              className="w-full h-full object-contain"
               controls
               autoPlay
               preload="auto"
@@ -139,6 +139,7 @@ export function ClipCard({ clip, index, onDelete }: ClipCardProps) {
                 className="w-full h-full object-cover"
                 preload="metadata"
                 muted
+                playsInline
                 onError={() => setVideoError(true)}
               />
             ) : (

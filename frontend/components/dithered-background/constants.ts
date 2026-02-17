@@ -12,9 +12,9 @@ const BAYER_RAW = [
 ];
 export const BAYER_8X8 = BAYER_RAW.map(row => row.map(v => v / 64));
 
-// Canvas resolution — rendered small, scaled up with image-rendering: pixelated
-export const RENDER_WIDTH = 160;
-export const RENDER_HEIGHT = 90;
+// Scene textures preprocessed at this resolution (WebGL renders at native viewport res)
+export const SCENE_TEX_WIDTH = 1920;
+export const SCENE_TEX_HEIGHT = 1080;
 
 // Scene image paths — ordered to tell a rally narrative
 export const SCENES = [
@@ -28,9 +28,9 @@ export const SCENES = [
 
 // --- Timing (ms) ---
 export const SCENE_HOLD_DURATION = 8000;
-export const TRANSITION_DISSOLVE = 700;
-export const TRANSITION_NOISE = 300;
-export const TRANSITION_RESOLVE = 1000;
+export const TRANSITION_DISSOLVE = 1200;
+export const TRANSITION_NOISE = 150;
+export const TRANSITION_RESOLVE = 1800;
 export const TRANSITION_TOTAL = TRANSITION_DISSOLVE + TRANSITION_NOISE + TRANSITION_RESOLVE;
 
 // Boot sequence phases
@@ -43,12 +43,12 @@ export const BOOT_TOTAL = BOOT_VOID_DURATION + BOOT_NOISE_DURATION + BOOT_RESOLV
 
 // Breathing: dither threshold oscillates on a sine wave
 export const BREATHING_PERIOD = 10000;
-export const BREATHING_AMPLITUDE = 0.06;
+export const BREATHING_AMPLITUDE = 0.04;
 
 // Scan drift: a faint bright band sweeps top-to-bottom
 export const SCAN_PERIOD = 8000;
-export const SCAN_HALF_HEIGHT = 2; // pixels in canvas space
-export const SCAN_ALPHA_BOOST = 0.03;
+export const SCAN_HALF_HEIGHT = 6; // pixels in canvas space (scaled with resolution)
+export const SCAN_ALPHA_BOOST = 0.02;
 
 // Mouse reveal: radial glow follows cursor
 export const MOUSE_REVEAL_RADIUS = 250; // screen pixels
@@ -68,7 +68,7 @@ export const GLITCH_ALPHA_BOOST = 30; // added to pixel alpha (0-255)
 export const SCROLL_PARALLAX_FACTOR = 0.05;
 
 // --- Visual ---
-export const BASE_ALPHA = 0.06;
+export const BASE_ALPHA = 0.08;
 
 // Image preprocessing — crush backgrounds, isolate players
 export const PREPROCESS_CONTRAST = 2.5;
@@ -76,7 +76,7 @@ export const PREPROCESS_BRIGHTNESS = -0.1;
 export const PREPROCESS_VIGNETTE = 0.7;
 
 // Noise density during transitions/boot (fraction of pixels lit)
-export const NOISE_DENSITY = 0.15;
+export const NOISE_DENSITY = 0.08;
 
 // Dissolve/resolve jitter for organic feel
-export const TRANSITION_JITTER = 0.3;
+export const TRANSITION_JITTER = 0.15;

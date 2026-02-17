@@ -128,6 +128,8 @@ function CounterCard({ item, shouldAnimate }: CounterCardProps) {
         background: 'var(--color-bg-surface)',
         border: `1px solid ${counting ? 'var(--accent-primary-glow-30)' : 'var(--color-border-dim)'}`,
         padding: '20px 24px',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
       onMouseEnter={(e) => {
         ;(e.currentTarget as HTMLElement).style.borderColor = counting

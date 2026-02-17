@@ -346,7 +346,7 @@ export function CommentaryTicker({ className = '' }: CommentaryTickerProps) {
   return (
     <div
       className={`ticker-container overflow-hidden h-8 relative rounded-sm border border-border-dim ${className}`}
-      style={{ background: 'var(--bg-void-92)' }}
+      style={{ background: 'var(--bg-void-75)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
     >
       <div
         ref={stripRef}

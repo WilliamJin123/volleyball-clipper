@@ -102,7 +102,7 @@ export function Header() {
     <header
       className="sticky top-0 z-100 flex items-center justify-between h-[56px] px-5 border-b border-border-dim"
       style={{
-        background: 'var(--bg-void-80)',
+        background: 'var(--bg-void-70)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}

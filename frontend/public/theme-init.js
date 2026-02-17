@@ -54,6 +54,10 @@
       s.setProperty("--accent-error-glow-12", g(ae, 0.12));
       s.setProperty("--accent-error-glow-15", g(ae, 0.15));
       s.setProperty("--accent-error-glow-30", g(ae, 0.3));
+      s.setProperty("--bg-surface-glass", g(c["bg-surface"], 0.55));
+      s.setProperty("--bg-raised-glass", g(c["bg-raised"], 0.5));
+      var vr = parseInt(bv.slice(1,3),16), vg = parseInt(bv.slice(3,5),16), vb = parseInt(bv.slice(5,7),16);
+      s.setProperty("--dither-invert", (vr*0.299+vg*0.587+vb*0.114)/255 > 0.5 ? "1" : "0");
     }
   } catch (e) {}
 })();

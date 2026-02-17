@@ -43,11 +43,13 @@ export default function RootLayout({
       </head>
       <body className="bg-bg-void text-text-primary font-body antialiased">
         <DitheredBackground />
-        <ThemeProvider>
-          <AuthProvider>
-            <AppShell>{children}</AppShell>
-          </AuthProvider>
-        </ThemeProvider>
+        <div className="relative z-1">
+          <ThemeProvider>
+            <AuthProvider>
+              <AppShell>{children}</AppShell>
+            </AuthProvider>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );

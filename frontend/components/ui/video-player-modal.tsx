@@ -93,13 +93,14 @@ export function VideoPlayerModal({
         </button>
 
         {/* Video player */}
-        <div className="aspect-video bg-bg-void">
+        <div className="aspect-video bg-bg-void/80">
           <video
             ref={videoRef}
             src={videoUrl}
-            className="w-full h-full"
+            className="w-full h-full object-contain"
             controls
             autoPlay
+            playsInline
             preload="auto"
             onLoadedMetadata={() => {
               if (videoRef.current && onVideoLoaded) {

@@ -162,7 +162,7 @@ export function ScoreBug() {
       <div
         className="font-mono text-[0.6875rem] rounded-sm min-w-[120px]"
         style={{
-          background: 'var(--bg-void-92)',
+          background: 'var(--bg-void-75)',
           border: '1px solid var(--color-border-dim)',
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',

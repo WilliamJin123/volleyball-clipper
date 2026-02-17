@@ -303,7 +303,7 @@ export default function SettingsPage() {
       <Sidebar />
       <main className="md:ml-[60px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-12 pb-24">
         {/* Page Header — sticky on desktop */}
-        <div className="mb-8 animate-in md:sticky md:top-0 md:z-30 md:bg-bg-void md:pt-4 md:pb-3">
+        <div className="mb-8 animate-in md:sticky md:top-0 md:z-30 md:pt-4 md:pb-3" style={{ background: 'var(--bg-void-50)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <h1 className="font-display font-bold text-xl sm:text-2xl text-text-primary">
             Settings
           </h1>
@@ -328,6 +328,8 @@ export default function SettingsPage() {
                 `}
                 style={{
                   background: 'var(--color-bg-surface)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
                   paddingLeft: 12,
                   paddingRight: 12,
@@ -423,8 +425,13 @@ export default function SettingsPage() {
           {/* Desktop Fixed Sidebar Navigation */}
           <nav
             ref={(el) => { navContainerRef.current = el }}
-            className="hidden md:flex md:flex-col gap-0.5 md:fixed md:top-[140px] md:w-[192px]"
-            style={navLeft !== null ? { left: navLeft } : undefined}
+            className="hidden md:flex md:flex-col gap-0.5 md:fixed md:top-[140px] md:w-[192px] rounded-sm border border-border-dim p-2"
+            style={{
+              ...(navLeft !== null ? { left: navLeft } : {}),
+              background: 'var(--bg-void-50)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+            }}
           >
             {sidebarItems.map((item) => {
               const isActive = activeSection === item.id

@@ -275,9 +275,10 @@ function VideoRow({
               <video
                 ref={videoRef}
                 src={videoUrl}
-                className="w-full aspect-video"
+                className="w-full aspect-video object-contain"
                 controls
                 autoPlay
+                playsInline
                 preload="auto"
                 onEnded={() => setPlaying(false)}
                 onLoadedMetadata={() => {
@@ -627,7 +628,7 @@ export default function UploadPage() {
   }, [videos])
 
   return (
-    <div className="min-h-screen bg-bg-void">
+    <div className="min-h-screen">
       <Sidebar />
 
       <main className="md:ml-[60px] relative z-1 max-w-[1600px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-8 pb-24">

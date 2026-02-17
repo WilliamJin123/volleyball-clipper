@@ -21,7 +21,7 @@ export default function HomePage() {
   // While checking auth, show nothing (brief flash)
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-void flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="font-mono text-sm text-text-dim pulse-text">Loading...</div>
       </div>
     )
@@ -34,9 +34,9 @@ export default function HomePage() {
 
   // Not logged in: show landing
   return (
-    <div className="min-h-screen bg-bg-void flex flex-col">
+    <div className="min-h-screen flex flex-col relative z-1">
       {/* Simple header */}
-      <header className="flex items-center justify-between h-[56px] px-5 border-b border-border-dim">
+      <header className="flex items-center justify-between h-[56px] px-5 border-b border-border-dim" style={{ background: 'var(--bg-void-70)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <Logo size="sm" href="/" />
         <div className="flex items-center gap-2">
           <Link

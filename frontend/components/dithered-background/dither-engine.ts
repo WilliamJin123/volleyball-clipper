@@ -1,7 +1,5 @@
 import {
   BAYER_8X8,
-  RENDER_WIDTH,
-  RENDER_HEIGHT,
   SCENES,
   SCENE_HOLD_DURATION,
   TRANSITION_DISSOLVE,
@@ -31,547 +29,429 @@ import {
   PREPROCESS_BRIGHTNESS,
   PREPROCESS_VIGNETTE,
   NOISE_DENSITY,
-  TRANSITION_JITTER,
 } from './constants';
 
-type Phase = 'boot' | 'hold' | 'dissolve' | 'noise' | 'resolve';
+const SCENE_W = 1920;
+const SCENE_H = 1080;
+const PAD = 50; // matches CSS inset: -50px
 
-interface GlitchRow {
-  row: number;
-  offset: number;
-}
+// --- Shaders ---
+
+const VERT = `attribute vec2 a;void main(){gl_Position=vec4(a,0,1);}`;
+
+const FRAG = `precision highp float;
+uniform sampler2D tCur,tNxt,tBay,tNoi;
+uniform vec2 res;
+uniform int phase;
+uniform float prog,breath,time,scanY,scanH,scanA;
+uniform vec2 mouse;
+uniform float mouseOn,mouseR,mouseA,baseA,nDens;
+uniform vec2 nOff;
+uniform vec4 gY,gX;
+uniform float gA,inv;
+
+float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+
+void main(){
+  vec2 fc=vec2(gl_FragCoord.x,res.y-gl_FragCoord.y);
+  float xs=0.0,gb=0.0;
+  if(gY.x>=0.0&&abs(fc.y-gY.x)<1.0){xs+=gX.x;gb=gA;}
+  if(gY.y>=0.0&&abs(fc.y-gY.y)<1.0){xs+=gX.y;gb=gA;}
+  if(gY.z>=0.0&&abs(fc.y-gY.z)<1.0){xs+=gX.z;gb=gA;}
+  if(gY.w>=0.0&&abs(fc.y-gY.w)<1.0){xs+=gX.w;gb=gA;}
+  vec2 c=vec2(fc.x+xs,fc.y);
+  vec2 uv=c/res;
+  float bay=texture2D(tBay,fract(c/8.0)).r;
+  float noi=texture2D(tNoi,(c+nOff)/512.0).r;
+  float lC=texture2D(tCur,uv).r;
+  float lN=texture2D(tNxt,uv).r;
+  if(inv>0.5){lC=1.0-lC;lN=1.0-lN;}
+  bool on=false;
+  float am=1.0;
+  if(phase==0){gl_FragColor=vec4(0);return;}
+  else if(phase==1){float h=hash(c+time);on=h<prog*nDens;am=0.3+h*0.7;}
+  else if(phase==2){
+    bool tgt=lC>bay;
+    float th=(1.0-lC)*0.8+0.1+(noi-0.5)*0.15;
+    th=clamp(th,0.0,1.0);
+    on=tgt&&prog>th;
+    float na=(1.0-prog)*nDens*0.5;
+    if(!on&&hash(c+time)<na){on=true;am=0.5;}
+  }
+  else if(phase==3){on=(lC+breath)>bay;}
+  else if(phase==4){
+    float t=prog*prog*(3.0-2.0*prog);
+    float dStr=sin(prog*3.14159)*0.06;
+    vec2 nUv=uv*2.5;
+    float nx=texture2D(tNoi,nUv+nOff/512.0+vec2(prog*0.5,0.0)).r-0.5;
+    float ny=texture2D(tNoi,nUv+nOff/512.0+vec2(0.0,prog*0.5+0.3)).r-0.5;
+    float swirl=texture2D(tNoi,uv*1.2+nOff/512.0).r*6.28+prog*1.5;
+    vec2 disp=vec2(nx*cos(swirl)-ny*sin(swirl),nx*sin(swirl)+ny*cos(swirl))*dStr;
+    float lA=texture2D(tCur,clamp(uv+disp,0.0,1.0)).r;
+    float lB=texture2D(tNxt,clamp(uv-disp,0.0,1.0)).r;
+    if(inv>0.5){lA=1.0-lA;lB=1.0-lB;}
+    float lum=mix(lA,lB,t);
+    float bFade=1.0-sin(prog*3.14159)*0.6;
+    on=(lum+breath*bFade)>bay;
+    float sparkle=sin(prog*3.14159)*0.015;
+    if(!on&&hash(c+time)<sparkle){on=true;am=0.6;}
+  }
+  if(!on){gl_FragColor=vec4(0);return;}
+  float a=baseA;
+  float sd=abs(fc.y-scanY*res.y);
+  if(sd<scanH)a+=scanA*(1.0-sd/scanH);
+  if(mouseOn>0.5){float md=length(fc-mouse);if(md<mouseR){float f=1.0-md/mouseR;a+=mouseA*f*f;}}
+  a=a*am+gb;
+  float col=inv>0.5?0.0:1.0;
+  gl_FragColor=vec4(col,col,col,clamp(a,0.0,1.0));
+}`;
+
+// --- Types ---
+
+type Phase = 'boot' | 'hold' | 'morph';
+interface Glitch { row: number; offset: number }
+
+// --- Engine ---
+
+// Detect mobile once at module level
+const IS_MOBILE = typeof navigator !== 'undefined' &&
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const MOBILE_DPR_CAP = 1.5;
+const MOBILE_FRAME_INTERVAL = 1000 / 30; // 30fps on mobile
 
 export class DitherEngine {
+  private gl: WebGLRenderingContext;
+  private program: WebGLProgram;
   private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private imageData: ImageData;
-  private pixelCount: number;
+  private loc: Record<string, WebGLUniformLocation | null> = {};
 
-  // Preprocessed grayscale luminance (0-1) for each scene
-  private scenes: Float32Array[] = [];
-  private currentScene = 0;
-  private nextScene = 1;
-  private scenesLoaded = false;
+  private sceneTex: WebGLTexture[] = [];
+  private bayTex!: WebGLTexture;
+  private noiTex!: WebGLTexture;
+  private sceneLum: Float32Array[] = [];
+  private curScene = 0;
+  private nxtScene = 1;
+  private loaded = false;
 
-  // Phase state
   private phase: Phase = 'boot';
   private phaseStart = 0;
-
-  // Transition buffers
-  private dissolveThresholds: Float32Array;
-  private resolveThresholds: Float32Array;
-  private dissolveSnapshot: Uint8Array; // which pixels were on at dissolve start
-  private resolveTarget: Uint8Array;    // which pixels should be on after resolve
-
-  // Effects
-  private mouseX = 0;
-  private mouseY = 0;
-  private mouseActive = false;
-  private scrollY = 0;
+  private mx = 0; private my = 0; private mOn = false;
   private nextGlitchTime = 0;
-  private glitchEndTime = 0;
-  private glitchRows: GlitchRow[] = [];
+  private glitchEnd = 0;
+  private gRows: Glitch[] = [];
+  private noiseOff: [number, number] = [0, 0];
 
-  // Animation
   private rafId = 0;
-  private startTime = 0;
-  private lastFrameTime = 0;
-
-  // Viewport
-  private vpWidth = 1;
-  private vpHeight = 1;
+  private t0 = 0;
+  private lastT = 0;
+  private lastDrawT = 0;
+  private vpW = 1; private vpH = 1;
+  private dpr = 1;
+  private isMobile: boolean;
+  private invertVal = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    canvas.width = RENDER_WIDTH;
-    canvas.height = RENDER_HEIGHT;
-    this.ctx = canvas.getContext('2d', { willReadFrequently: false })!;
-    this.imageData = this.ctx.createImageData(RENDER_WIDTH, RENDER_HEIGHT);
-    this.pixelCount = RENDER_WIDTH * RENDER_HEIGHT;
+    this.isMobile = IS_MOBILE;
+    this.dpr = this.isMobile
+      ? Math.min(devicePixelRatio || 1, MOBILE_DPR_CAP)
+      : Math.min(devicePixelRatio || 1, 3);
+    this.vpW = innerWidth || 1;
+    this.vpH = innerHeight || 1;
 
-    this.dissolveThresholds = new Float32Array(this.pixelCount);
-    this.resolveThresholds = new Float32Array(this.pixelCount);
-    this.dissolveSnapshot = new Uint8Array(this.pixelCount);
-    this.resolveTarget = new Uint8Array(this.pixelCount);
+    const gl = canvas.getContext('webgl', {
+      alpha: true, premultipliedAlpha: false, antialias: false,
+    })!;
+    this.gl = gl;
 
-    this.vpWidth = window.innerWidth || 1;
-    this.vpHeight = window.innerHeight || 1;
+    const vs = this.mkShader(gl.VERTEX_SHADER, VERT);
+    const fs = this.mkShader(gl.FRAGMENT_SHADER, FRAG);
+    this.program = gl.createProgram()!;
+    gl.attachShader(this.program, vs);
+    gl.attachShader(this.program, fs);
+    gl.linkProgram(this.program);
+    gl.useProgram(this.program);
+
+    const buf = gl.createBuffer()!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const a = gl.getAttribLocation(this.program, 'a');
+    gl.enableVertexAttribArray(a);
+    gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+
+    const uNames = [
+      'tCur','tNxt','tBay','tNoi','res','phase','prog','breath','time',
+      'scanY','scanH','scanA','mouse','mouseOn','mouseR','mouseA',
+      'baseA','nDens','nOff','gY','gX','gA','inv',
+    ];
+    for (const n of uNames) this.loc[n] = gl.getUniformLocation(this.program, n);
+
+    this.bayTex = this.mkTex(8, 8,
+      new Uint8Array(BAYER_8X8.flat().map(v => Math.round(v * 255))),
+      gl.NEAREST);
+
+    const nd = new Uint8Array(512 * 512);
+    for (let off = 0; off < nd.length; off += 65536)
+      crypto.getRandomValues(nd.subarray(off, Math.min(off + 65536, nd.length)));
+    this.noiTex = this.mkTex(512, 512, nd, gl.LINEAR);
+
+    this.resize();
   }
 
   // --- Public API ---
 
   async start() {
     await this.loadScenes();
-    this.startTime = performance.now();
-    this.phaseStart = this.startTime;
-    this.lastFrameTime = this.startTime;
-    this.scheduleGlitch(this.startTime);
-
-    // Precompute resolve data for boot sequence (resolves into scene 0)
-    this.computeResolveTarget(0);
-    this.computeResolveThresholds(this.scenes[0]);
-
+    this.t0 = performance.now();
+    this.phaseStart = this.t0;
+    this.lastT = this.t0;
+    this.schedGlitch(this.t0);
     this.rafId = requestAnimationFrame(this.tick);
   }
 
-  stop() {
-    cancelAnimationFrame(this.rafId);
-  }
+  stop() { cancelAnimationFrame(this.rafId); }
 
   setMouse(x: number, y: number) {
-    this.mouseX = x;
-    this.mouseY = y;
-    this.mouseActive = true;
+    if (this.isMobile) return; // skip mouse tracking on touch devices
+    this.mx = x; this.my = y; this.mOn = true;
   }
-
-  clearMouse() {
-    this.mouseActive = false;
-  }
-
-  setScroll(y: number) {
-    this.scrollY = y;
-  }
+  clearMouse() { this.mOn = false; }
+  setInvert(v: number) { this.invertVal = v; }
+  setScroll(_y: number) { /* parallax handled by CSS transform */ }
 
   setViewport(w: number, h: number) {
-    this.vpWidth = w || 1;
-    this.vpHeight = h || 1;
+    this.vpW = w || 1; this.vpH = h || 1;
+    this.dpr = this.isMobile
+      ? Math.min(devicePixelRatio || 1, MOBILE_DPR_CAP)
+      : Math.min(devicePixelRatio || 1, 3);
+    this.resize();
   }
 
-  // --- Image Loading & Preprocessing ---
+  // --- GL Helpers ---
 
-  private async loadScenes(): Promise<void> {
-    const loadImg = (src: string): Promise<HTMLImageElement> =>
-      new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-      });
-
-    const images = await Promise.all(SCENES.map(loadImg));
-    this.scenes = images.map(img => this.preprocessImage(img));
-    this.scenesLoaded = true;
+  private mkShader(type: number, src: string) {
+    const gl = this.gl, s = gl.createShader(type)!;
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      console.error('Shader:', gl.getShaderInfoLog(s));
+    return s;
   }
 
-  private preprocessImage(img: HTMLImageElement): Float32Array {
-    const off = document.createElement('canvas');
-    off.width = RENDER_WIDTH;
-    off.height = RENDER_HEIGHT;
-    const offCtx = off.getContext('2d', { willReadFrequently: true })!;
-    offCtx.drawImage(img, 0, 0, RENDER_WIDTH, RENDER_HEIGHT);
-
-    const { data } = offCtx.getImageData(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
-    const luminance = new Float32Array(this.pixelCount);
-    const cx = RENDER_WIDTH / 2;
-    const cy = RENDER_HEIGHT / 2;
-
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        const pi = i * 4;
-
-        // Grayscale
-        let gray = (data[pi] * 0.299 + data[pi + 1] * 0.587 + data[pi + 2] * 0.114) / 255;
-
-        // Contrast around midpoint
-        gray = (gray - 0.5) * PREPROCESS_CONTRAST + 0.5 + PREPROCESS_BRIGHTNESS;
-
-        // Vignette — quadratic falloff from center
-        const dx = (x - cx) / cx;
-        const dy = (y - cy) / cy;
-        const dist = Math.sqrt(dx * dx + dy * dy) / Math.SQRT2;
-        gray *= 1 - PREPROCESS_VIGNETTE * dist * dist;
-
-        luminance[i] = Math.max(0, Math.min(1, gray));
-      }
-    }
-    return luminance;
+  private mkTex(w: number, h: number, data: Uint8Array, filt: number, wrap?: number) {
+    const gl = this.gl, t = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, w, h, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filt);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filt);
+    const wrapMode = wrap ?? gl.REPEAT;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapMode);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapMode);
+    return t;
   }
 
-  // --- Transition Helpers ---
-
-  private computeDissolveThresholds(): void {
-    // Find centroid of "on" pixels — edges dissolve first, core last
-    let cx = 0, cy = 0, count = 0;
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        if (this.dissolveSnapshot[y * RENDER_WIDTH + x]) {
-          cx += x;
-          cy += y;
-          count++;
-        }
-      }
-    }
-    if (count === 0) return;
-    cx /= count;
-    cy /= count;
-
-    // Max distance for normalization
-    let maxDist = 0;
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        if (this.dissolveSnapshot[y * RENDER_WIDTH + x]) {
-          const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-          if (d > maxDist) maxDist = d;
-        }
-      }
-    }
-
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        if (this.dissolveSnapshot[i]) {
-          const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-          const norm = maxDist > 0 ? d / maxDist : 0;
-          // Far from center → low threshold → dissolves early
-          const jitter = (Math.random() - 0.5) * TRANSITION_JITTER;
-          this.dissolveThresholds[i] = clamp((1 - norm) * 0.8 + 0.1 + jitter);
-        } else {
-          this.dissolveThresholds[i] = 0;
-        }
-      }
+  private resize() {
+    const w = Math.round((this.vpW + PAD * 2) * this.dpr);
+    const h = Math.round((this.vpH + PAD * 2) * this.dpr);
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+      this.gl.viewport(0, 0, w, h);
     }
   }
 
-  private computeResolveThresholds(luminance: Float32Array): void {
-    for (let i = 0; i < this.pixelCount; i++) {
-      // Bright pixels resolve first (low threshold)
-      const jitter = (Math.random() - 0.5) * TRANSITION_JITTER;
-      this.resolveThresholds[i] = clamp((1 - luminance[i]) * 0.8 + 0.1 + jitter);
+  // --- Scene Loading ---
+
+  private async loadScenes() {
+    const load = (s: string) => new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = s;
+    });
+    const imgs = await Promise.all(SCENES.map(load));
+    for (const img of imgs) {
+      const lum = this.preprocess(img);
+      this.sceneLum.push(lum);
+      const d = new Uint8Array(lum.length);
+      for (let i = 0; i < lum.length; i++) d[i] = Math.round(lum[i] * 255);
+      this.sceneTex.push(this.mkTex(SCENE_W, SCENE_H, d, this.gl.LINEAR, this.gl.CLAMP_TO_EDGE));
     }
+    this.loaded = true;
   }
 
-  private computeResolveTarget(sceneIndex: number): void {
-    const lum = this.scenes[sceneIndex];
-    if (!lum) return;
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        this.resolveTarget[i] = lum[i] > BAYER_8X8[y & 7][x & 7] ? 1 : 0;
+  private preprocess(img: HTMLImageElement): Float32Array {
+    const c = document.createElement('canvas');
+    c.width = SCENE_W; c.height = SCENE_H;
+    const ctx = c.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(img, 0, 0, SCENE_W, SCENE_H);
+    const { data } = ctx.getImageData(0, 0, SCENE_W, SCENE_H);
+    const n = SCENE_W * SCENE_H, lum = new Float32Array(n);
+    const cx = SCENE_W / 2, cy = SCENE_H / 2;
+    for (let y = 0; y < SCENE_H; y++) {
+      for (let x = 0; x < SCENE_W; x++) {
+        const i = y * SCENE_W + x, pi = i * 4;
+        let g = (data[pi] * 0.299 + data[pi+1] * 0.587 + data[pi+2] * 0.114) / 255;
+        g = (g - 0.5) * PREPROCESS_CONTRAST + 0.5 + PREPROCESS_BRIGHTNESS;
+        const dx = (x - cx) / cx, dy = (y - cy) / cy;
+        g *= 1 - PREPROCESS_VIGNETTE * (dx * dx + dy * dy) / 2;
+        lum[i] = Math.max(0, Math.min(1, g));
       }
     }
-  }
-
-  private snapshotCurrentDither(time: number): void {
-    const lum = this.scenes[this.currentScene];
-    if (!lum) return;
-    const breathOffset = Math.sin(((time % BREATHING_PERIOD) / BREATHING_PERIOD) * Math.PI * 2) * BREATHING_AMPLITUDE;
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        this.dissolveSnapshot[i] = (lum[i] + breathOffset) > BAYER_8X8[y & 7][x & 7] ? 1 : 0;
-      }
-    }
+    return lum;
   }
 
   // --- Glitch ---
 
-  private scheduleGlitch(time: number): void {
-    this.nextGlitchTime = time + GLITCH_MIN_INTERVAL + Math.random() * (GLITCH_MAX_INTERVAL - GLITCH_MIN_INTERVAL);
-    this.glitchEndTime = 0;
-    this.glitchRows = [];
+  private schedGlitch(t: number) {
+    this.nextGlitchTime = t + GLITCH_MIN_INTERVAL + Math.random() * (GLITCH_MAX_INTERVAL - GLITCH_MIN_INTERVAL);
+    this.glitchEnd = 0;
+    this.gRows = [];
   }
 
-  private updateGlitch(time: number): void {
-    // Glitch active and ended
-    if (this.glitchEndTime > 0 && time > this.glitchEndTime) {
-      this.scheduleGlitch(time);
-      return;
-    }
-    // Time to trigger a new glitch
-    if (this.glitchEndTime === 0 && time >= this.nextGlitchTime) {
-      this.glitchEndTime = time + GLITCH_DURATION;
-      const numRows = GLITCH_ROWS_MIN + Math.floor(Math.random() * (GLITCH_ROWS_MAX - GLITCH_ROWS_MIN + 1));
-      this.glitchRows = [];
-      for (let r = 0; r < numRows; r++) {
-        const shift = GLITCH_SHIFT_MIN + Math.floor(Math.random() * (GLITCH_SHIFT_MAX - GLITCH_SHIFT_MIN + 1));
-        this.glitchRows.push({
-          row: Math.floor(Math.random() * RENDER_HEIGHT),
-          offset: (Math.random() > 0.5 ? 1 : -1) * shift,
+  private updGlitch(t: number) {
+    if (this.glitchEnd > 0 && t > this.glitchEnd) { this.schedGlitch(t); return; }
+    if (this.glitchEnd === 0 && t >= this.nextGlitchTime) {
+      this.glitchEnd = t + GLITCH_DURATION;
+      const n = GLITCH_ROWS_MIN + Math.floor(Math.random() * (GLITCH_ROWS_MAX - GLITCH_ROWS_MIN + 1));
+      this.gRows = [];
+      for (let i = 0; i < n; i++) {
+        const s = GLITCH_SHIFT_MIN + Math.floor(Math.random() * (GLITCH_SHIFT_MAX - GLITCH_SHIFT_MIN + 1));
+        this.gRows.push({
+          row: Math.floor(Math.random() * this.canvas.height),
+          offset: (Math.random() > 0.5 ? 1 : -1) * s * this.dpr,
         });
       }
     }
   }
 
-  private applyGlitch(): void {
-    if (this.glitchRows.length === 0) return;
-    const data = this.imageData.data;
-    const rowBytes = RENDER_WIDTH * 4;
-
-    for (const { row, offset } of this.glitchRows) {
-      if (row < 0 || row >= RENDER_HEIGHT) continue;
-      const rowStart = row * rowBytes;
-      const buf = new Uint8ClampedArray(rowBytes);
-
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const srcX = x - offset;
-        if (srcX >= 0 && srcX < RENDER_WIDTH) {
-          const si = rowStart + srcX * 4;
-          const di = x * 4;
-          buf[di] = data[si];
-          buf[di + 1] = data[si + 1];
-          buf[di + 2] = data[si + 2];
-          buf[di + 3] = Math.min(255, data[si + 3] + GLITCH_ALPHA_BOOST);
-        }
-      }
-      // Write row back
-      for (let b = 0; b < rowBytes; b++) {
-        data[rowStart + b] = buf[b];
-      }
-    }
-  }
-
-  // --- Per-pixel Alpha ---
-
-  private getAlpha(x: number, y: number, time: number): number {
-    let alpha = BASE_ALPHA;
-
-    // Scan drift: faint bright band sweeping top to bottom
-    const scanY = ((time % SCAN_PERIOD) / SCAN_PERIOD) * RENDER_HEIGHT;
-    const scanDist = Math.abs(y - scanY);
-    if (scanDist < SCAN_HALF_HEIGHT) {
-      alpha += SCAN_ALPHA_BOOST * (1 - scanDist / SCAN_HALF_HEIGHT);
-    }
-
-    // Mouse reveal: radial glow at cursor
-    if (this.mouseActive) {
-      const mx = (this.mouseX / this.vpWidth) * RENDER_WIDTH;
-      const my = (this.mouseY / this.vpHeight) * RENDER_HEIGHT;
-      const r = (MOUSE_REVEAL_RADIUS / this.vpWidth) * RENDER_WIDTH;
-      const dx = x - mx;
-      const dy = y - my;
-      const d = Math.sqrt(dx * dx + dy * dy);
-      if (d < r) {
-        const f = 1 - d / r;
-        alpha += MOUSE_REVEAL_BOOST * f * f; // quadratic falloff
-      }
-    }
-
-    return alpha;
-  }
-
-  private setPixel(x: number, y: number, alpha: number): void {
-    const i = (y * RENDER_WIDTH + x) * 4;
-    const d = this.imageData.data;
-    d[i] = 255;
-    d[i + 1] = 255;
-    d[i + 2] = 255;
-    d[i + 3] = Math.round(Math.min(1, alpha) * 255);
-  }
-
-  // --- Render Phases ---
-
-  private renderHoldFrame(time: number): void {
-    const lum = this.scenes[this.currentScene];
-    if (!lum) return;
-    const breathPhase = ((time % BREATHING_PERIOD) / BREATHING_PERIOD) * Math.PI * 2;
-    const breathOffset = Math.sin(breathPhase) * BREATHING_AMPLITUDE;
-
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        if ((lum[i] + breathOffset) > BAYER_8X8[y & 7][x & 7]) {
-          this.setPixel(x, y, this.getAlpha(x, y, time));
-        }
-      }
-    }
-  }
-
-  private renderDissolveFrame(progress: number, time: number): void {
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        if (this.dissolveSnapshot[i] && progress < this.dissolveThresholds[i]) {
-          this.setPixel(x, y, this.getAlpha(x, y, time));
-        }
-      }
-    }
-  }
-
-  private renderNoiseFrame(time: number): void {
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        if (Math.random() < NOISE_DENSITY) {
-          this.setPixel(x, y, this.getAlpha(x, y, time));
-        }
-      }
-    }
-  }
-
-  private renderResolveFrame(progress: number, time: number): void {
-    // Resolved pixels appear
-    for (let y = 0; y < RENDER_HEIGHT; y++) {
-      for (let x = 0; x < RENDER_WIDTH; x++) {
-        const i = y * RENDER_WIDTH + x;
-        if (this.resolveTarget[i] && progress > this.resolveThresholds[i]) {
-          this.setPixel(x, y, this.getAlpha(x, y, time));
-        }
-      }
-    }
-    // Residual noise for pixels not yet resolved — fades as resolve completes
-    const noiseAmount = (1 - progress) * NOISE_DENSITY * 0.5;
-    if (noiseAmount > 0.005) {
-      for (let y = 0; y < RENDER_HEIGHT; y++) {
-        for (let x = 0; x < RENDER_WIDTH; x++) {
-          const i = y * RENDER_WIDTH + x;
-          const pi = (y * RENDER_WIDTH + x) * 4;
-          // Only add noise where pixel isn't already set
-          if (this.imageData.data[pi + 3] === 0 && Math.random() < noiseAmount) {
-            this.setPixel(x, y, this.getAlpha(x, y, time) * 0.5);
-          }
-        }
-      }
-    }
-  }
-
-  private renderBootFrame(time: number): void {
-    const elapsed = time - this.startTime;
-
-    if (elapsed < BOOT_VOID_DURATION) {
-      // Pure void — nothing
-      return;
-    }
-
-    if (elapsed < BOOT_VOID_DURATION + BOOT_NOISE_DURATION) {
-      // Scattered dots, density increasing
-      const t = (elapsed - BOOT_VOID_DURATION) / BOOT_NOISE_DURATION;
-      const density = t * NOISE_DENSITY;
-      for (let y = 0; y < RENDER_HEIGHT; y++) {
-        for (let x = 0; x < RENDER_WIDTH; x++) {
-          if (Math.random() < density) {
-            const flicker = 0.3 + Math.random() * 0.7;
-            this.setPixel(x, y, BASE_ALPHA * flicker);
-          }
-        }
-      }
-      return;
-    }
-
-    if (!this.scenesLoaded) {
-      // Still loading images — show noise placeholder
-      for (let y = 0; y < RENDER_HEIGHT; y++) {
-        for (let x = 0; x < RENDER_WIDTH; x++) {
-          if (Math.random() < NOISE_DENSITY) {
-            this.setPixel(x, y, BASE_ALPHA);
-          }
-        }
-      }
-      return;
-    }
-
-    // Resolve into first scene
-    const resolveElapsed = elapsed - BOOT_VOID_DURATION - BOOT_NOISE_DURATION;
-    const progress = Math.min(1, resolveElapsed / BOOT_RESOLVE_DURATION);
-    this.renderResolveFrame(progress, time);
-  }
-
   // --- Phase Transitions ---
 
-  private startDissolve(time: number): void {
-    this.phase = 'dissolve';
-    this.phaseStart = time;
-    this.nextScene = (this.currentScene + 1) % this.scenes.length;
-    this.snapshotCurrentDither(time);
-    this.computeDissolveThresholds();
+  private startMorph(t: number) {
+    this.phase = 'morph'; this.phaseStart = t;
+    this.nxtScene = (this.curScene + 1) % this.sceneTex.length;
+    this.noiseOff = [Math.random() * 512, Math.random() * 512];
   }
 
-  private startNoise(time: number): void {
-    this.phase = 'noise';
-    this.phaseStart = time;
-  }
-
-  private startResolve(time: number): void {
-    this.phase = 'resolve';
-    this.phaseStart = time;
-    this.computeResolveTarget(this.nextScene);
-    this.computeResolveThresholds(this.scenes[this.nextScene]);
-  }
-
-  private startHold(time: number): void {
-    this.currentScene = this.nextScene;
-    this.phase = 'hold';
-    this.phaseStart = time;
+  private startHold(t: number) {
+    this.curScene = this.nxtScene;
+    this.phase = 'hold'; this.phaseStart = t;
   }
 
   // --- Main Loop ---
 
-  private tick = (timestamp: number): void => {
-    // Handle tab-away: if more than 1s gap, reset timing to avoid fast-forward
-    const gap = timestamp - this.lastFrameTime;
+  private tick = (ts: number) => {
+    const gap = ts - this.lastT;
     if (gap > 1000) {
-      const adjust = gap - 16;
-      this.startTime += adjust;
-      this.phaseStart += adjust;
-      if (this.nextGlitchTime > 0) this.nextGlitchTime += adjust;
-      if (this.glitchEndTime > 0) this.glitchEndTime += adjust;
+      const adj = gap - 16;
+      this.t0 += adj; this.phaseStart += adj;
+      if (this.nextGlitchTime > 0) this.nextGlitchTime += adj;
+      if (this.glitchEnd > 0) this.glitchEnd += adj;
     }
-    this.lastFrameTime = timestamp;
+    this.lastT = ts;
 
-    // Clear canvas
-    this.imageData.data.fill(0);
+    // Throttle to 30fps on mobile
+    if (this.isMobile && (ts - this.lastDrawT) < MOBILE_FRAME_INTERVAL) {
+      this.rafId = requestAnimationFrame(this.tick);
+      return;
+    }
+    this.lastDrawT = ts;
 
-    // Render current phase
+    this.resize();
+    this.updGlitch(ts);
+
+    const gl = this.gl;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Bind textures
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.sceneTex[this.curScene] || this.bayTex);
+    gl.uniform1i(this.loc.tCur!, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.sceneTex[this.nxtScene] || this.bayTex);
+    gl.uniform1i(this.loc.tNxt!, 1);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.bayTex);
+    gl.uniform1i(this.loc.tBay!, 2);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this.noiTex);
+    gl.uniform1i(this.loc.tNoi!, 3);
+
+    gl.uniform2f(this.loc.res!, this.canvas.width, this.canvas.height);
+    gl.uniform1f(this.loc.time!, ts * 0.001);
+
+    // Phase logic
+    let phaseInt = 3;
+    let progress = 0;
+    let breathVal = Math.sin(((ts % BREATHING_PERIOD) / BREATHING_PERIOD) * Math.PI * 2) * BREATHING_AMPLITUDE;
+
     switch (this.phase) {
       case 'boot': {
-        this.renderBootFrame(timestamp);
-        const bootElapsed = timestamp - this.startTime;
-        if (this.scenesLoaded && bootElapsed >= BOOT_TOTAL) {
-          this.phase = 'hold';
-          this.phaseStart = timestamp;
+        const elapsed = ts - this.t0;
+        if (elapsed < BOOT_VOID_DURATION) {
+          phaseInt = 0;
+        } else if (elapsed < BOOT_VOID_DURATION + BOOT_NOISE_DURATION) {
+          phaseInt = 1;
+          progress = (elapsed - BOOT_VOID_DURATION) / BOOT_NOISE_DURATION;
+        } else if (!this.loaded) {
+          phaseInt = 1; progress = 1.0; // full density noise while loading
+        } else {
+          phaseInt = 2;
+          progress = Math.min(1, (elapsed - BOOT_VOID_DURATION - BOOT_NOISE_DURATION) / BOOT_RESOLVE_DURATION);
+        }
+        if (this.loaded && elapsed >= BOOT_TOTAL) {
+          this.phase = 'hold'; this.phaseStart = ts;
+          phaseInt = 3;
         }
         break;
       }
-
       case 'hold': {
-        this.renderHoldFrame(timestamp);
-        if (timestamp - this.phaseStart >= SCENE_HOLD_DURATION) {
-          this.startDissolve(timestamp);
-        }
+        phaseInt = 3;
+        if (ts - this.phaseStart >= SCENE_HOLD_DURATION) this.startMorph(ts);
         break;
       }
-
-      case 'dissolve': {
-        const progress = (timestamp - this.phaseStart) / TRANSITION_DISSOLVE;
-        if (progress >= 1) {
-          this.startNoise(timestamp);
-          this.renderNoiseFrame(timestamp);
-        } else {
-          this.renderDissolveFrame(progress, timestamp);
-        }
-        break;
-      }
-
-      case 'noise': {
-        this.renderNoiseFrame(timestamp);
-        if (timestamp - this.phaseStart >= TRANSITION_NOISE) {
-          this.startResolve(timestamp);
-        }
-        break;
-      }
-
-      case 'resolve': {
-        const progress = (timestamp - this.phaseStart) / TRANSITION_RESOLVE;
-        if (progress >= 1) {
-          this.startHold(timestamp);
-          this.renderHoldFrame(timestamp);
-        } else {
-          this.renderResolveFrame(progress, timestamp);
-        }
+      case 'morph': {
+        const morphDuration = TRANSITION_DISSOLVE + TRANSITION_NOISE + TRANSITION_RESOLVE;
+        progress = (ts - this.phaseStart) / morphDuration;
+        if (progress >= 1) { this.startHold(ts); phaseInt = 3; }
+        else phaseInt = 4;
         break;
       }
     }
 
-    // Post-processing effects
-    this.updateGlitch(timestamp);
-    this.applyGlitch();
+    gl.uniform1i(this.loc.phase!, phaseInt);
+    gl.uniform1f(this.loc.prog!, Math.max(0, Math.min(1, progress)));
+    gl.uniform1f(this.loc.breath!, breathVal);
 
-    // Commit to canvas
-    this.ctx.putImageData(this.imageData, 0, 0);
+    // Scan line
+    const scanFrac = (ts % SCAN_PERIOD) / SCAN_PERIOD;
+    const scanHPx = SCAN_HALF_HEIGHT * (this.canvas.height / 270);
+    gl.uniform1f(this.loc.scanY!, scanFrac);
+    gl.uniform1f(this.loc.scanH!, scanHPx);
+    gl.uniform1f(this.loc.scanA!, SCAN_ALPHA_BOOST);
 
+    // Mouse (convert viewport coords to canvas-pixel coords, Y-down)
+    gl.uniform2f(this.loc.mouse!,
+      (this.mx + PAD) * this.dpr,
+      (this.my + PAD) * this.dpr);
+    gl.uniform1f(this.loc.mouseOn!, this.mOn ? 1 : 0);
+    gl.uniform1f(this.loc.mouseR!, MOUSE_REVEAL_RADIUS * this.dpr);
+    gl.uniform1f(this.loc.mouseA!, MOUSE_REVEAL_BOOST);
+
+    gl.uniform1f(this.loc.baseA!, BASE_ALPHA);
+    gl.uniform1f(this.loc.nDens!, NOISE_DENSITY);
+
+    gl.uniform2f(this.loc.nOff!, this.noiseOff[0], this.noiseOff[1]);
+
+    // Glitch rows (up to 4)
+    const gy = [-1, -1, -1, -1], gx = [0, 0, 0, 0];
+    for (let i = 0; i < Math.min(4, this.gRows.length); i++) {
+      gy[i] = this.gRows[i].row;
+      gx[i] = this.gRows[i].offset;
+    }
+    gl.uniform4f(this.loc.gY!, gy[0], gy[1], gy[2], gy[3]);
+    gl.uniform4f(this.loc.gX!, gx[0], gx[1], gx[2], gx[3]);
+    gl.uniform1f(this.loc.gA!, GLITCH_ALPHA_BOOST / 255);
+    gl.uniform1f(this.loc.inv!, this.invertVal);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.rafId = requestAnimationFrame(this.tick);
   };
-}
-
-function clamp(v: number, min = 0, max = 1): number {
-  return v < min ? min : v > max ? max : v;
 }
