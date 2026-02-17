@@ -50,6 +50,7 @@ uniform vec2 nOff;
 uniform vec4 gY,gX;
 uniform float gA,inv;
 
+const float SAR=1920.0/1080.0;
 float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 
 void main(){
@@ -61,10 +62,21 @@ void main(){
   if(gY.w>=0.0&&abs(fc.y-gY.w)<1.0){xs+=gX.w;gb=gA;}
   vec2 c=vec2(fc.x+xs,fc.y);
   vec2 uv=c/res;
+  // Cover-fit: maintain scene 16:9 aspect ratio, crop excess
+  float car=res.x/res.y;
+  float r=car/SAR;
+  vec2 sUv;
+  float drift=sin(time*0.06)*0.03;
+  if(r>1.0){sUv=vec2(uv.x+drift,(uv.y-0.5)/r+0.5);}
+  else{
+    float panAmp=max((1.0-r)*0.5,0.03);
+    float cx=0.5+sin(time*0.06)*panAmp;
+    sUv=vec2((uv.x-0.5)*r+cx,uv.y);
+  }
   float bay=texture2D(tBay,fract(c/8.0)).r;
   float noi=texture2D(tNoi,(c+nOff)/512.0).r;
-  float lC=texture2D(tCur,uv).r;
-  float lN=texture2D(tNxt,uv).r;
+  float lC=texture2D(tCur,sUv).r;
+  float lN=texture2D(tNxt,sUv).r;
   if(inv>0.5){lC=1.0-lC;lN=1.0-lN;}
   bool on=false;
   float am=1.0;
@@ -87,8 +99,8 @@ void main(){
     float ny=texture2D(tNoi,nUv+nOff/512.0+vec2(0.0,prog*0.5+0.3)).r-0.5;
     float swirl=texture2D(tNoi,uv*1.2+nOff/512.0).r*6.28+prog*1.5;
     vec2 disp=vec2(nx*cos(swirl)-ny*sin(swirl),nx*sin(swirl)+ny*cos(swirl))*dStr;
-    float lA=texture2D(tCur,clamp(uv+disp,0.0,1.0)).r;
-    float lB=texture2D(tNxt,clamp(uv-disp,0.0,1.0)).r;
+    float lA=texture2D(tCur,clamp(sUv+disp,0.0,1.0)).r;
+    float lB=texture2D(tNxt,clamp(sUv-disp,0.0,1.0)).r;
     if(inv>0.5){lA=1.0-lA;lB=1.0-lB;}
     float lum=mix(lA,lB,t);
     float bFade=1.0-sin(prog*3.14159)*0.6;
